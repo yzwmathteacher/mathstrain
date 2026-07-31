@@ -480,6 +480,7 @@
         document.querySelector('[data-difficulty="basic"]').classList.add('bg-primary', 'text-white', 'border-primary');
 
         // ===================== 出题引擎核心 =====================
+                // ===================== 出题引擎核心（人教版大纲精准对标） =====================
         function generateQuestions() {
             const { grade, type, count, difficulty } = currentConfig;
             questionList = [];
@@ -504,163 +505,436 @@
             currentIndex = 0;
         }
 
-        // 口算题生成
+        // 口算题生成 - 严格对标人教版各年级计算要求
         function generateOralQuestion(grade, difficulty) {
-            let a, b, op, answer, text;
+            let a, b, c, op, answer, text;
             const isHard = difficulty === 'hard';
 
             switch(grade) {
-                case 1: // 一年级：20以内加减法
-                    op = Math.random() > 0.5 ? '+' : '-';
-                    if(op === '+') {
-                        a = randomInt(1, isHard ? 12 : 9);
-                        b = randomInt(1, isHard ? 8 : 9);
-                        answer = a + b;
-                    } else {
-                        a = randomInt(isHard ? 10 : 5, 20);
-                        b = randomInt(1, a);
-                        answer = a - b;
-                    }
-                    text = `${a} ${op} ${b} = `;
-                    break;
-
-                case 2: // 二年级：100以内加减、表内乘除
-                    const type2 = randomInt(1, isHard ? 3 : 2);
-                    if(type2 === 1) { // 加减
+                case 1: // 人教版一年级：20以内进退位加减、100以内整十数加减、两位数加减一位数
+                    if(Math.random() < 0.6) {
+                        // 20以内进退位加减法（核心考点）
                         op = Math.random() > 0.5 ? '+' : '-';
-                        a = randomInt(10, isHard ? 90 : 50);
-                        b = randomInt(10, isHard ? 50 : 30);
-                        if(op === '-') { if(a < b) [a,b] = [b,a]; answer = a - b; }
-                        else answer = a + b;
+                        if(op === '+') {
+                            a = randomInt(5, 9);
+                            b = randomInt(5, 9);
+                            answer = a + b;
+                        } else {
+                            a = randomInt(11, 18);
+                            b = randomInt(3, 9);
+                            answer = a - b;
+                        }
                         text = `${a} ${op} ${b} = `;
-                    } else if(type2 === 2) { // 乘法
-                        a = randomInt(2, 9);
-                        b = randomInt(2, 9);
-                        answer = a * b;
-                        text = `${a} × ${b} = `;
-                    } else { // 除法
-                        b = randomInt(2, 9);
-                        answer = randomInt(2, 9);
-                        a = b * answer;
-                        text = `${a} ÷ ${b} = `;
-                    }
-                    break;
-
-                case 3: // 三年级：万以内加减、多位数乘一位数
-                    const type3 = randomInt(1, 3);
-                    if(type3 === 1) {
-                        op = Math.random() > 0.5 ? '+' : '-';
-                        a = randomInt(100, isHard ? 999 : 500);
-                        b = randomInt(100, isHard ? 999 : 500);
-                        if(op === '-') { if(a < b) [a,b] = [b,a]; answer = a - b; }
-                        else answer = a + b;
-                        text = `${a} ${op} ${b} = `;
-                    } else if(type3 === 2) {
-                        a = randomInt(10, isHard ? 999 : 99);
-                        b = randomInt(2, 9);
-                        answer = a * b;
-                        text = `${a} × ${b} = `;
+                    } else if(Math.random() < 0.8) {
+                        // 整十数加减整十数
+                        a = randomInt(1, 8) * 10;
+                        b = randomInt(1, 8) * 10;
+                        if(Math.random() > 0.5) {
+                            answer = a + b;
+                            text = `${a} + ${b} = `;
+                        } else {
+                            if(a < b) [a,b] = [b,a];
+                            answer = a - b;
+                            text = `${a} - ${b} = `;
+                        }
                     } else {
+                        // 两位数加减一位数（进退位）
+                        a = randomInt(20, 70);
                         b = randomInt(2, 9);
-                        answer = randomInt(10, isHard ? 99 : 50);
-                        a = b * answer;
-                        text = `${a} ÷ ${b} = `;
+                        if(Math.random() > 0.5) {
+                            answer = a + b;
+                            text = `${a} + ${b} = `;
+                        } else {
+                            answer = a - b;
+                            text = `${a} - ${b} = `;
+                        }
+                    }
+                    // 提升版：连加连减
+                    if(isHard && Math.random() < 0.3) {
+                        a = randomInt(3, 9);
+                        b = randomInt(2, 8);
+                        c = randomInt(2, 7);
+                        answer = a + b - c;
+                        text = `${a} + ${b} - ${c} = `;
                     }
                     break;
 
-                case 4: // 四年级：三位数乘两位数、除数是两位数
-                    const type4 = randomInt(1, 2);
-                    if(type4 === 1) {
-                        a = randomInt(100, 999);
-                        b = randomInt(10, isHard ? 99 : 50);
-                        answer = a * b;
-                        text = `${a} × ${b} = `;
-                    } else {
-                        b = randomInt(10, isHard ? 99 : 50);
-                        answer = randomInt(5, 50);
-                        a = b * answer;
-                        text = `${a} ÷ ${b} = `;
+                case 2: // 人教版二年级：表内乘除法、100以内加减笔算、有余数除法、万以内整百加减
+                    const type2 = randomInt(1, isHard ? 5 : 4);
+                    switch(type2) {
+                        case 1: // 表内乘法（全部口诀）
+                            a = randomInt(2, 9);
+                            b = randomInt(2, 9);
+                            answer = a * b;
+                            text = `${a} × ${b} = `;
+                            break;
+                        case 2: // 表内除法
+                            b = randomInt(2, 9);
+                            answer = randomInt(2, 9);
+                            a = b * answer;
+                            text = `${a} ÷ ${b} = `;
+                            break;
+                        case 3: // 100以内两位数加减（进退位）
+                            op = Math.random() > 0.5 ? '+' : '-';
+                            a = randomInt(20, 80);
+                            b = randomInt(15, 50);
+                            if(op === '+') answer = a + b;
+                            else { if(a < b) [a,b] = [b,a]; answer = a - b; }
+                            text = `${a} ${op} ${b} = `;
+                            break;
+                        case 4: // 整百整千数加减
+                            a = randomInt(2, 9) * 100;
+                            b = randomInt(1, 6) * 100;
+                            if(Math.random() > 0.5) { answer = a + b; text = `${a} + ${b} = `; }
+                            else { if(a < b) [a,b] = [b,a]; answer = a - b; text = `${a} - ${b} = `; }
+                            break;
+                        case 5: // 提升版：乘加乘减混合、有余数除法
+                            if(Math.random() > 0.5) {
+                                a = randomInt(2, 9);
+                                b = randomInt(2, 9);
+                                c = randomInt(1, 9);
+                                answer = a * b + c;
+                                text = `${a} × ${b} + ${c} = `;
+                            } else {
+                                // 有余数除法
+                                b = randomInt(3, 9);
+                                answer = randomInt(2, 8);
+                                const rem = randomInt(1, b-1);
+                                a = b * answer + rem;
+                                text = `${a} ÷ ${b} = ___ 余 ___`;
+                                answer = answer; // 只判商，余数可在拓展中增加
+                            }
+                            break;
                     }
                     break;
 
-                case 5: // 五年级：小数乘除法
-                    const type5 = randomInt(1, 2);
-                    if(type5 === 1) {
-                        a = randomInt(10, 99) / 10;
-                        b = randomInt(2, 9);
-                        answer = Math.round(a * b * 100) / 100;
-                        text = `${a} × ${b} = `;
-                    } else {
-                        b = randomInt(2, 9);
-                        answer = randomInt(10, 99) / 10;
-                        a = Math.round(b * answer * 10) / 10;
-                        text = `${a} ÷ ${b} = `;
+                case 3: // 人教版三年级：多位数乘一位数、除数是一位数除法、万以内加减、分数初步计算
+                    const type3 = randomInt(1, isHard ? 5 : 4);
+                    switch(type3) {
+                        case 1: // 多位数乘一位数（核心考点）
+                            a = randomInt(12, isHard ? 999 : 199);
+                            b = randomInt(2, 9);
+                            answer = a * b;
+                            text = `${a} × ${b} = `;
+                            break;
+                        case 2: // 除数是一位数的除法
+                            b = randomInt(2, 9);
+                            answer = randomInt(11, isHard ? 99 : 50);
+                            a = b * answer;
+                            text = `${a} ÷ ${b} = `;
+                            break;
+                        case 3: // 万以内数加减法
+                            a = randomInt(100, 900);
+                            b = randomInt(100, 600);
+                            op = Math.random() > 0.5 ? '+' : '-';
+                            if(op === '+') answer = a + b;
+                            else { if(a < b) [a,b] = [b,a]; answer = a - b; }
+                            text = `${a} ${op} ${b} = `;
+                            break;
+                        case 4: // 同分母分数加减法
+                            const den = randomInt(3, 9);
+                            const num1 = randomInt(1, den-1);
+                            const num2 = randomInt(1, den-num1);
+                            answer = (num1 + num2) / den;
+                            text = `${num1}/${den} + ${num2}/${den} = `;
+                            break;
+                        case 5: // 提升版：两位数乘两位数口算、连乘连除
+                            if(Math.random() > 0.5) {
+                                a = randomInt(10, 30);
+                                b = randomInt(2, 9) * 10;
+                                answer = a * b;
+                                text = `${a} × ${b} = `;
+                            } else {
+                                a = randomInt(2, 9);
+                                b = randomInt(2, 9);
+                                answer = randomInt(5, 20);
+                                const total = a * b * answer;
+                                text = `${total} ÷ ${a} ÷ ${b} = `;
+                            }
+                            break;
                     }
                     break;
 
-                case 6: // 六年级：分数乘除、百分数
-                    const type6 = randomInt(1, 2);
-                    if(type6 === 1) { // 分数乘法
-                        const num1 = randomInt(1, 9);
-                        const den1 = randomInt(2, 10);
-                        const num2 = randomInt(1, 9);
-                        const den2 = randomInt(2, 10);
-                        answer = (num1 * num2) / (den1 * den2);
-                        text = `${num1}/${den1} × ${num2}/${den2} = `;
-                    } else { // 百分数计算
-                        a = randomInt(10, 200);
-                        const pct = randomInt(10, 90);
-                        answer = a * pct / 100;
-                        text = `${a} 的 ${pct}% = `;
+                case 4: // 人教版四年级：三位数乘两位数、除数是两位数、运算定律、小数加减
+                    const type4 = randomInt(1, isHard ? 5 : 4);
+                    switch(type4) {
+                        case 1: // 三位数乘两位数
+                            a = randomInt(100, 400);
+                            b = randomInt(12, isHard ? 89 : 30);
+                            answer = a * b;
+                            text = `${a} × ${b} = `;
+                            break;
+                        case 2: // 除数是两位数的除法
+                            b = randomInt(12, isHard ? 89 : 30);
+                            answer = randomInt(5, 30);
+                            a = b * answer;
+                            text = `${a} ÷ ${b} = `;
+                            break;
+                        case 3: // 小数加减法（一位/两位小数）
+                            a = randomInt(10, 99) / 10;
+                            b = randomInt(10, 99) / 10;
+                            op = Math.random() > 0.5 ? '+' : '-';
+                            if(op === '+') answer = Math.round((a + b) * 100) / 100;
+                            else { if(a < b) [a,b] = [b,a]; answer = Math.round((a - b) * 100) / 100; }
+                            text = `${a} ${op} ${b} = `;
+                            break;
+                        case 4: // 四则混合运算（两步）
+                            a = randomInt(10, 50);
+                            b = randomInt(2, 9);
+                            c = randomInt(10, 30);
+                            answer = a + b * c;
+                            text = `${a} + ${b} × ${c} = `;
+                            break;
+                        case 5: // 提升版：简便运算口算、大数凑整
+                            // 乘法分配律口算
+                            a = randomInt(10, 50);
+                            b = randomInt(2, 9);
+                            c = randomInt(2, 9);
+                            answer = a * (b + c);
+                            text = `${a} × ${b} + ${a} × ${c} = `;
+                            break;
                     }
                     break;
 
-                case 7: // 七年级：有理数加减乘除
-                    const type7 = randomInt(1, 3);
-                    a = randomInt(-20, 20);
-                    b = randomInt(-20, 20);
-                    if(type7 === 1) { answer = a + b; text = `${a} + (${b}) = `; }
-                    else if(type7 === 2) { answer = a - b; text = `${a} - (${b}) = `; }
-                    else { 
-                        b = randomInt(-10, 10);
-                        if(b === 0) b = 2;
-                        answer = a * b; 
-                        text = `${a} × (${b}) = `; 
+                case 5: // 人教版五年级：小数乘除法、分数加减法、因数倍数、简易方程
+                    const type5 = randomInt(1, isHard ? 5 : 4);
+                    switch(type5) {
+                        case 1: // 小数乘法
+                            a = randomInt(12, 99) / 10;
+                            b = randomInt(2, 9);
+                            answer = Math.round(a * b * 100) / 100;
+                            text = `${a} × ${b} = `;
+                            break;
+                        case 2: // 小数除法
+                            b = randomInt(2, 9);
+                            answer = randomInt(12, 99) / 10;
+                            a = Math.round(b * answer * 10) / 10;
+                            text = `${a} ÷ ${b} = `;
+                            break;
+                        case 3: // 异分母分数加减法
+                            const den1 = randomInt(2, 6);
+                            const den2 = randomInt(2, 6);
+                            const lcm = den1 * den2; // 简化处理，分母互质
+                            const num1 = randomInt(1, den1-1);
+                            const num2 = randomInt(1, den2-1);
+                            answer = (num1 * den2 + num2 * den1) / lcm;
+                            text = `${num1}/${den1} + ${num2}/${den2} = `;
+                            break;
+                        case 4: // 简易方程求解（一步/两步）
+                            a = randomInt(5, 30);
+                            b = randomInt(10, 50);
+                            answer = b - a;
+                            text = `x + ${a} = ${b}，x = `;
+                            break;
+                        case 5: // 提升版：小数四则混合、最大公因数/最小公倍数口算
+                            if(Math.random() > 0.5) {
+                                a = randomInt(10, 30) / 10;
+                                b = randomInt(2, 5);
+                                c = randomInt(5, 20) / 10;
+                                answer = Math.round((a * b + c) * 100) / 100;
+                                text = `${a} × ${b} + ${c} = `;
+                            } else {
+                                // 求最小公倍数
+                                a = randomInt(2, 9);
+                                b = randomInt(2, 9);
+                                answer = (a * b) / gcd(a, b);
+                                text = `${a}和${b}的最小公倍数 = `;
+                            }
+                            break;
                     }
                     break;
 
-                case 8: // 八年级：整式、实数运算
-                    const type8 = randomInt(1, 2);
-                    if(type8 === 1) { // 简单整式加减
-                        a = randomInt(1, 9);
-                        b = randomInt(1, 9);
-                        answer = a + b;
-                        text = `${a}x + ${b}x = ____x`;
-                    } else { // 平方根
-                        const n = randomInt(2, 12);
-                        answer = n;
-                        text = `√${n*n} = `;
+                case 6: // 人教版六年级：分数乘除法、百分数、比、比例
+                    const type6 = randomInt(1, isHard ? 5 : 4);
+                    switch(type6) {
+                        case 1: // 分数乘法
+                            const num1 = randomInt(1, 9);
+                            const den1 = randomInt(2, 10);
+                            const num2 = randomInt(1, 9);
+                            const den2 = randomInt(2, 10);
+                            answer = (num1 * num2) / (den1 * den2);
+                            text = `${num1}/${den1} × ${num2}/${den2} = `;
+                            break;
+                        case 2: // 分数除法
+                            const n1 = randomInt(1, 8);
+                            const d1 = randomInt(2, 9);
+                            const n2 = randomInt(1, 8);
+                            const d2 = randomInt(2, 9);
+                            answer = (n1 * d2) / (d1 * n2);
+                            text = `${n1}/${d1} ÷ ${n2}/${d2} = `;
+                            break;
+                        case 3: // 百分数计算
+                            a = randomInt(50, 200);
+                            const pct = randomInt(10, 90);
+                            answer = a * pct / 100;
+                            text = `${a} 的 ${pct}% = `;
+                            break;
+                        case 4: // 比的化简求值
+                            a = randomInt(2, 20);
+                            const scale = randomInt(2, 5);
+                            b = a * scale;
+                            answer = scale;
+                            text = `${b} : ${a} 化简后比值 = `;
+                            break;
+                        case 5: // 提升版：分数四则混合、折扣成数口算
+                            if(Math.random() > 0.5) {
+                                const base = randomInt(100, 500);
+                                const discount = randomInt(6, 9);
+                                answer = base * discount / 10;
+                                text = `原价${base}元，打${discount}折，现价 = 元`;
+                            } else {
+                                // 分数乘加混合
+                                const n = randomInt(1, 5);
+                                const d = randomInt(5, 10);
+                                const x = randomInt(10, 30);
+                                answer = (n/d) * x + x;
+                                text = `${x} × ${n}/${d} + ${x} = `;
+                            }
+                            break;
                     }
                     break;
 
-                case 9: // 九年级：二次根式、一元二次方程
-                    const type9 = randomInt(1, 2);
-                    if(type9 === 1) {
-                        const n = randomInt(2, 8);
-                        answer = n;
-                        text = `√${n*n} = `;
-                    } else {
-                        // 简单方程 x + a = b
-                        a = randomInt(1, 20);
-                        b = randomInt(10, 50);
-                        answer = b - a;
-                        text = `x + ${a} = ${b}，x = `;
+                case 7: // 人教版七年级：有理数运算、整式加减、一元一次方程
+                    const type7 = randomInt(1, isHard ? 5 : 4);
+                    switch(type7) {
+                        case 1: // 有理数加减
+                            a = randomInt(-30, 30);
+                            b = randomInt(-20, 20);
+                            answer = a + b;
+                            text = `${a} + (${b}) = `;
+                            break;
+                        case 2: // 有理数乘除
+                            a = randomInt(-15, 15);
+                            b = randomInt(-10, 10);
+                            if(b === 0) b = 2;
+                            answer = a * b;
+                            text = `${a} × (${b}) = `;
+                            break;
+                        case 3: // 整式加减（合并同类项）
+                            a = randomInt(2, 9);
+                            b = randomInt(1, 7);
+                            answer = a + b;
+                            text = `${a}x + ${b}x = ___x`;
+                            break;
+                        case 4: // 一元一次方程求解
+                            a = randomInt(2, 9);
+                            b = randomInt(10, 50);
+                            answer = b / a;
+                            text = `${a}x = ${b}，x = `;
+                            break;
+                        case 5: // 提升版：有理数乘方、混合运算
+                            if(Math.random() > 0.5) {
+                                a = randomInt(2, 6);
+                                answer = a * a;
+                                text = `${a}² = `;
+                            } else {
+                                a = randomInt(-10, 10);
+                                b = randomInt(2, 5);
+                                c = randomInt(-10, 10);
+                                answer = a + b * c;
+                                text = `${a} + ${b} × (${c}) = `;
+                            }
+                            break;
+                    }
+                    break;
+
+                case 8: // 人教版八年级：整式乘除、乘法公式、二次根式、分式运算
+                    const type8 = randomInt(1, isHard ? 5 : 4);
+                    switch(type8) {
+                        case 1: // 幂的运算
+                            a = randomInt(2, 8);
+                            b = randomInt(2, 5);
+                            c = randomInt(2, 4);
+                            answer = b + c;
+                            text = `a^${b} · a^${c} = a^___`;
+                            break;
+                        case 2: // 乘法公式（平方差/完全平方）
+                            a = randomInt(2, 9);
+                            answer = a * a;
+                            text = `(a + ${a})(a - ${a}) = a² - ___`;
+                            break;
+                        case 3: // 二次根式化简
+                            const n = randomInt(2, 10);
+                            answer = n;
+                            text = `√${n*n} = `;
+                            break;
+                        case 4: // 因式分解基础
+                            a = randomInt(2, 9);
+                            b = randomInt(2, 9);
+                            answer = a + b;
+                            text = `x² + ${a+b}x + ${a*b} = (x+${a})(x+___)`;
+                            break;
+                        case 5: // 提升版：分式加减、勾股数计算
+                            if(Math.random() > 0.5) {
+                                const den = randomInt(2, 9);
+                                answer = 2 / den;
+                                text = `1/${den} + 1/${den} = `;
+                            } else {
+                                // 勾股定理口算
+                                const g1 = [3,4,5, 6,8,10, 5,12,13][randomInt(0,2)*3];
+                                const g2 = [3,4,5, 6,8,10, 5,12,13][randomInt(0,2)*3+1];
+                                answer = [3,4,5, 6,8,10, 5,12,13][randomInt(0,2)*3+2];
+                                text = `直角三角形两直角边${g1}、${g2}，斜边长 = `;
+                            }
+                            break;
+                    }
+                    break;
+
+                case 9: // 人教版九年级：一元二次方程、二次函数、圆、三角函数、相似
+                    const type9 = randomInt(1, isHard ? 5 : 4);
+                    switch(type9) {
+                        case 1: // 一元二次方程求根（简单整数根）
+                            const r1 = randomInt(1, 5);
+                            const r2 = randomInt(1, 5);
+                            const b = -(r1 + r2);
+                            const c = r1 * r2;
+                            answer = r1; // 正根即可
+                            text = `x² + ${b}x + ${c} = 0 的正根 = `;
+                            break;
+                        case 2: // 二次函数顶点坐标
+                            a = randomInt(1, 4);
+                            const h = randomInt(1, 5);
+                            const k = randomInt(1, 10);
+                            answer = h;
+                            text = `y = ${a}(x-${h})² + ${k} 的顶点横坐标 = `;
+                            break;
+                        case 3: // 圆的周长/面积计算
+                            const r = randomInt(3, 10);
+                            if(Math.random() > 0.5) {
+                                answer = 2 * 3.14 * r;
+                                text = `半径${r}的圆，周长 = ___（π取3.14）`;
+                            } else {
+                                answer = 3.14 * r * r;
+                                text = `半径${r}的圆，面积 = ___（π取3.14）`;
+                            }
+                            break;
+                        case 4: // 特殊角三角函数值
+                            const angles = [30, 45, 60];
+                            const ang = angles[randomInt(0,2)];
+                            const sinVals = {30: 0.5, 45: Math.SQRT2/2, 60: Math.SQRT3/2};
+                            answer = sinVals[ang];
+                            text = `sin${ang}° = `;
+                            break;
+                        case 5: // 提升版：相似三角形比例、根的判别式
+                            if(Math.random() > 0.5) {
+                                const scale = randomInt(2, 4);
+                                a = randomInt(3, 8);
+                                answer = a * scale;
+                                text = `两三角形相似，相似比1:${scale}，小三角形边长${a}，对应边长 = `;
+                            } else {
+                                a = randomInt(1, 3);
+                                b = randomInt(4, 8);
+                                c = randomInt(1, 3);
+                                answer = b*b - 4*a*c;
+                                text = `ax²+bx+c=0中a=${a},b=${b},c=${c}，判别式Δ = `;
+                            }
+                            break;
                     }
                     break;
 
                 default:
-                    a = randomInt(1, 10);
-                    b = randomInt(1, 10);
+                    a = randomInt(10, 50);
+                    b = randomInt(5, 30);
                     answer = a + b;
                     text = `${a} + ${b} = `;
             }
@@ -668,131 +942,407 @@
             return { text, answer, type: 'oral' };
         }
 
-        // 简便计算题生成
+        // 简便计算题生成 - 对标人教版运算定律教学序列
         function generateSimpleQuestion(grade, difficulty) {
             let text, answer;
             const isHard = difficulty === 'hard';
 
             switch(grade) {
-                case 3:
-                    // 加减法凑整
-                    const a = randomInt(10, 99);
-                    const b = randomInt(1, 9);
-                    const c = randomInt(10, 99);
-                    answer = a + b + c;
-                    text = `${a} + ${b} + ${c} = `;
-                    break;
-
-                case 4:
-                    // 乘法分配律、结合律
-                    const type4 = randomInt(1, 2);
-                    if(type4 === 1) {
-                        const a = randomInt(2, 9);
-                        const b = randomInt(10, 99);
-                        const c = randomInt(10, 99);
-                        answer = a * (b + c);
-                        text = `${a} × ${b} + ${a} × ${c} = `;
+                case 3: // 三年级：加减凑整、连减性质、乘法凑整
+                    if(Math.random() < 0.5) {
+                        // 加法凑整
+                        const a = randomInt(10, 89);
+                        const b = 100 - a - randomInt(1, 9);
+                        const c = randomInt(20, 70);
+                        answer = a + b + c;
+                        text = `${a} + ${c} + ${b} = `;
                     } else {
+                        // 连减性质
+                        const total = randomInt(200, 500);
+                        const a = randomInt(30, 90);
+                        const b = randomInt(10, 70);
+                        answer = total - a - b;
+                        text = `${total} - ${a} - ${b} = `;
+                    }
+                    if(isHard) {
+                        // 乘法结合律入门
                         const a = randomInt(2, 9);
-                        const b = randomInt(2, 9);
-                        const c = randomInt(10, 99);
+                        const b = randomInt(2, 5) * 2; // 凑整因子
+                        const c = randomInt(10, 50);
                         answer = a * b * c;
-                        text = `${a} × ${b} × ${c} = `;
+                        text = `${a} × ${c} × ${b} = `;
                     }
                     break;
 
-                case 5:
-                    // 小数简便运算
-                    const a5 = randomInt(10, 99) / 10;
-                    const b5 = randomInt(10, 99) / 10;
-                    const c5 = randomInt(2, 9);
-                    answer = Math.round((a5 + b5) * c5 * 100) / 100;
-                    text = `${a5} × ${c5} + ${b5} × ${c5} = `;
+                case 4: // 四年级：五大运算定律全量考察（核心年级）
+                    const type4 = randomInt(1, isHard ? 5 : 4);
+                    switch(type4) {
+                        case 1: // 加法交换律+结合律
+                            const a1 = randomInt(10, 89);
+                            const b1 = 100 - a1;
+                            const c1 = randomInt(100, 300);
+                            const d1 = randomInt(50, 150);
+                            answer = a1 + b1 + c1 + d1;
+                            text = `${a1} + ${c1} + ${b1} + ${d1} = `;
+                            break;
+                        case 2: // 乘法交换律+结合律
+                            const a2 = randomInt(2, 9);
+                            const b2 = [25, 125, 50][randomInt(0,2)];
+                            const c2 = randomInt(2, 8);
+                            answer = a2 * b2 * c2;
+                            text = `${a2} × ${b2} × ${c2} = `;
+                            break;
+                        case 3: // 乘法分配律（正用）
+                            const a3 = randomInt(10, 99);
+                            const b3 = randomInt(2, 9);
+                            const c3 = randomInt(2, 9);
+                            answer = a3 * (b3 + c3);
+                            text = `${a3} × ${b3} + ${a3} × ${c3} = `;
+                            break;
+                        case 4: // 连除性质
+                            const total4 = randomInt(100, 500);
+                            const a4 = randomInt(2, 9);
+                            const b4 = randomInt(2, 9);
+                            answer = total4 / (a4 * b4);
+                            text = `${total4} ÷ ${a4} ÷ ${b4} = `;
+                            break;
+                        case 5: // 提升版：乘法分配律拓展（接近整十整百）
+                            const base = randomInt(20, 90);
+                            const near = 100 + randomInt(-5, 5);
+                            answer = base * near;
+                            text = `${base} × ${near} = `;
+                            break;
+                    }
                     break;
 
-                case 6:
-                    // 分数简便运算
-                    const num1 = randomInt(1, 5);
-                    const den = randomInt(5, 10);
-                    const a6 = randomInt(5, 15);
-                    const b6 = randomInt(5, 15);
-                    answer = (num1 / den) * (a6 + b6);
-                    text = `${num1}/${den} × ${a6} + ${num1}/${den} × ${b6} = `;
+                case 5: // 五年级：小数简便运算
+                    const type5 = randomInt(1, isHard ? 4 : 3);
+                    switch(type5) {
+                        case 1: // 小数加法凑整
+                            const a5 = randomInt(10, 99) / 10;
+                            const b5 = randomInt(1, 9) / 10;
+                            const c5 = randomInt(10, 50) / 10;
+                            answer = Math.round((a5 + b5 + c5) * 100) / 100;
+                            text = `${a5} + ${c5} + ${b5} = `;
+                            break;
+                        case 2: // 小数乘法分配律
+                            const a = randomInt(10, 99) / 10;
+                            const b = randomInt(2, 9);
+                            const c = randomInt(2, 9);
+                            answer = Math.round(a * (b + c) * 100) / 100;
+                            text = `${a} × ${b} + ${a} × ${c} = `;
+                            break;
+                        case 3: // 连减性质（小数）
+                            const total = randomInt(10, 50);
+                            const a1 = randomInt(10, 99) / 10;
+                            const b1 = randomInt(10, 99) / 10;
+                            answer = Math.round((total - a1 - b1) * 100) / 100;
+                            text = `${total} - ${a1} - ${b1} = `;
+                            break;
+                        case 4: // 提升版：积不变规律简算
+                            const a4 = randomInt(12, 99) / 10;
+                            const b4 = randomInt(2, 9);
+                            answer = Math.round(a4 * b4 * 100) / 100;
+                            text = `${a4 * 10} × ${b4 / 10} = `;
+                            break;
+                    }
                     break;
 
-                case 7:
-                    // 有理数简便运算
-                    const a7 = randomInt(10, 50);
-                    const b7 = randomInt(1, 10);
-                    const c7 = randomInt(1, 10);
-                    answer = a7 - b7 - c7;
-                    text = `${a7} - ${b7} - ${c7} = `;
+                case 6: // 六年级：分数简便运算
+                    const type6 = randomInt(1, isHard ? 4 : 3);
+                    switch(type6) {
+                        case 1: // 分数乘法分配律
+                            const num = randomInt(1, 5);
+                            const den = randomInt(5, 10);
+                            const a6 = randomInt(10, 30);
+                            const b6 = randomInt(10, 30);
+                            answer = (num / den) * (a6 + b6);
+                            text = `${num}/${den} × ${a6} + ${num}/${den} × ${b6} = `;
+                            break;
+                        case 2: // 连除转化为乘法
+                            const a = randomInt(10, 50);
+                            const n1 = randomInt(1, 5);
+                            const d1 = randomInt(2, 8);
+                            answer = a * d1 / n1;
+                            text = `${a} ÷ ${n1}/${d1} = `;
+                            break;
+                        case 3: // 加法交换律结合律（分数）
+                            const f1n = randomInt(1, 4);
+                            const f1d = randomInt(5, 9);
+                            const f2n = randomInt(1, 4);
+                            const f2d = randomInt(5, 9);
+                            const int = randomInt(2, 10);
+                            answer = int + (f1n + f2n) / f1d;
+                            text = `${f1n}/${f1d} + ${int} + ${f2n}/${f2d} = `;
+                            break;
+                        case 4: // 提升版：拆分法简算
+                            const base = randomInt(20, 50);
+                            const n = randomInt(1, 5);
+                            const d = randomInt(6, 10);
+                            answer = base * n / d;
+                            text = `(${base}) × ${n}/${d} = `;
+                            break;
+                    }
+                    break;
+
+                case 7: // 七年级：有理数简便运算
+                    const type7 = randomInt(1, 3);
+                    switch(type7) {
+                        case 1: // 相反数结合
+                            const a7 = randomInt(10, 30);
+                            const b7 = -a7;
+                            const c7 = randomInt(-20, 20);
+                            answer = c7;
+                            text = `${a7} + ${c7} + (${b7}) = `;
+                            break;
+                        case 2: // 同号结合
+                            const a = randomInt(-30, -10);
+                            const b = randomInt(-20, -5);
+                            const c = randomInt(20, 50);
+                            answer = a + b + c;
+                            text = `(${a}) + (${b}) + ${c} = `;
+                            break;
+                        case 3: // 分配律
+                            const num = randomInt(2, 9);
+                            const a1 = randomInt(10, 30);
+                            const b1 = randomInt(10, 30);
+                            answer = num * (a1 - b1);
+                            text = `${num} × ${a1} - ${num} × ${b1} = `;
+                            break;
+                    }
                     break;
 
                 default:
-                    // 低年级默认简单凑整
-                    const a0 = randomInt(10, 99);
-                    const b0 = randomInt(1, 9);
-                    answer = a0 + b0;
+                    // 低年级默认凑整加减
+                    const a0 = randomInt(20, 89);
+                    const b0 = 100 - a0;
+                    answer = 100;
                     text = `${a0} + ${b0} = `;
             }
 
             return { text, answer, type: 'simple' };
         }
 
-        // 应用题生成
+        // 应用题生成 - 对标人教版各年级典型应用题型
         function generateWordQuestion(grade, difficulty) {
             let text, answer;
             const isHard = difficulty === 'hard';
 
             switch(grade) {
-                case 1:
-                    const a1 = randomInt(3, 10);
-                    const b1 = randomInt(2, 8);
-                    answer = a1 + b1;
-                    text = `小明有${a1}个苹果，妈妈又给了他${b1}个，小明现在一共有多少个苹果？`;
+                case 1: // 一年级：求和、求差、总数部分数、比多比少
+                    if(Math.random() < 0.5) {
+                        const a = randomInt(8, 15);
+                        const b = randomInt(5, 12);
+                        answer = a + b;
+                        text = `小明有${a}支铅笔，妈妈又给他买了${b}支，小明现在一共有多少支铅笔？`;
+                    } else {
+                        const total = randomInt(15, 25);
+                        const use = randomInt(6, 12);
+                        answer = total - use;
+                        text = `书架上有${total}本书，借走了${use}本，还剩多少本书？`;
+                    }
+                    if(isHard) {
+                        const a = randomInt(10, 20);
+                        const b = randomInt(3, 8);
+                        answer = a - b;
+                        text = `红花有${a}朵，黄花比红花少${b}朵，黄花有多少朵？`;
+                    }
                     break;
 
-                case 2:
-                    const a2 = randomInt(5, 20);
-                    const b2 = randomInt(2, 9);
-                    answer = a2 * b2;
-                    text = `每盒铅笔有${a2}支，买${b2}盒一共有多少支铅笔？`;
+                case 2: // 二年级：乘除法平均分、倍数问题、有余数除法、两步计算
+                    const type2 = randomInt(1, isHard ? 4 : 3);
+                    switch(type2) {
+                        case 1: // 乘法应用题
+                            const num = randomInt(4, 9);
+                            const per = randomInt(3, 8);
+                            answer = num * per;
+                            text = `每盒有${per}块橡皮，买${num}盒一共有多少块橡皮？`;
+                            break;
+                        case 2: // 除法平均分
+                            const total = randomInt(20, 60);
+                            const people = randomInt(3, 9);
+                            answer = total / people;
+                            text = `把${total}个糖果平均分给${people}个小朋友，每人分几个？`;
+                            break;
+                        case 3: // 倍数问题
+                            const a = randomInt(3, 9);
+                            const times = randomInt(2, 5);
+                            answer = a * times;
+                            text = `公鸡有${a}只，母鸡的数量是公鸡的${times}倍，母鸡有多少只？`;
+                            break;
+                        case 4: // 有余数除法应用
+                            const total2 = randomInt(20, 50);
+                            const per2 = randomInt(5, 9);
+                            answer = Math.ceil(total2 / per2);
+                            text = `${total2}名同学坐船，每条船坐${per2}人，至少需要多少条船？`;
+                            break;
+                    }
                     break;
 
-                case 3:
-                    const price = randomInt(5, 20);
-                    const num = randomInt(3, 15);
-                    answer = price * num;
-                    text = `一个笔记本${price}元，买${num}个笔记本一共需要多少钱？`;
+                case 3: // 三年级：归一归总、路程、周长、面积初步、分数应用题
+                    const type3 = randomInt(1, isHard ? 5 : 4);
+                    switch(type3) {
+                        case 1: // 价格问题
+                            const price = randomInt(5, 25);
+                            const num = randomInt(4, 12);
+                            answer = price * num;
+                            text = `一个笔记本${price}元，买${num}个一共需要多少钱？`;
+                            break;
+                        case 2: // 路程问题
+                            const speed = randomInt(50, 90);
+                            const time = randomInt(2, 6);
+                            answer = speed * time;
+                            text = `汽车每小时行驶${speed}千米，行驶${time}小时，一共行驶多少千米？`;
+                            break;
+                        case 3: // 长方形周长
+                            const len = randomInt(8, 20);
+                            const wid = randomInt(5, 12);
+                            answer = 2 * (len + wid);
+                            text = `长方形菜地长${len}米，宽${wid}米，周长是多少米？`;
+                            break;
+                        case 4: // 归一问题
+                            const per3 = randomInt(5, 15);
+                            const base = randomInt(3, 8);
+                            const total3 = randomInt(10, 20);
+                            answer = per3 * total3 / base;
+                            text = `${base}本书重${per3}千克，照这样计算，${total3}本书重多少千克？`;
+                            break;
+                        case 5: // 分数应用题
+                            const total5 = randomInt(12, 36);
+                            const frac = randomInt(2, 4);
+                            answer = total5 / frac;
+                            text = `一箱苹果有${total5}个，吃了1/${frac}，吃了多少个？`;
+                            break;
+                    }
                     break;
 
-                case 4:
-                    const speed = randomInt(40, 80);
-                    const time = randomInt(2, 8);
-                    answer = speed * time;
-                    text = `一辆汽车每小时行驶${speed}千米，行驶${time}小时，一共行驶多少千米？`;
+                case 4: // 四年级：四则混合、价格路程优化、运算定律应用、鸡兔同笼入门
+                    const type4 = randomInt(1, isHard ? 4 : 3);
+                    switch(type4) {
+                        case 1: // 两步混合运算
+                            const a = randomInt(20, 50);
+                            const b = randomInt(3, 8);
+                            const c = randomInt(50, 100);
+                            answer = a * b + c;
+                            text = `商店运来${b}箱苹果，每箱${a}千克，又运来${c}千克梨，一共运来多少千克水果？`;
+                            break;
+                        case 2: // 单价数量总价
+                            const price4 = randomInt(25, 80);
+                            const num4 = randomInt(12, 30);
+                            const money = randomInt(2000, 3000);
+                            answer = money - price4 * num4;
+                            text = `王老师带${money}元买${num4}个篮球，每个${price4}元，还剩多少钱？`;
+                            break;
+                        case 3: // 相遇问题
+                            const v1 = randomInt(40, 70);
+                            const v2 = randomInt(50, 80);
+                            const t = randomInt(2, 5);
+                            answer = (v1 + v2) * t;
+                            text = `两车从两地相向而行，甲车每小时行${v1}千米，乙车每小时行${v2}千米，${t}小时后相遇，两地相距多少千米？`;
+                            break;
+                        case 4: // 优化方案题
+                            const people = randomInt(30, 50);
+                            const big = randomInt(8, 12);
+                            const small = randomInt(4, 6);
+                            answer = Math.ceil(people / big);
+                            text = `${people}人去公园，大船限坐${big}人，小船限坐${small}人，最少需要几条大船？`;
+                            break;
+                    }
                     break;
 
-                case 5:
-                    const total = randomInt(100, 500);
-                    const days = randomInt(3, 10);
-                    answer = Math.round(total / days * 100) / 100;
-                    text = `工程队${days}天修路${total}米，平均每天修路多少米？（保留两位小数）`;
+                case 5: // 五年级：小数乘除、方程应用题、面积体积、因数倍数应用
+                    const type5 = randomInt(1, isHard ? 5 : 4);
+                    switch(type5) {
+                        case 1: // 小数乘法应用
+                            const price5 = randomInt(5, 20) + randomInt(1, 9) / 10;
+                            const num5 = randomInt(3, 12);
+                            answer = Math.round(price5 * num5 * 100) / 100;
+                            text = `每千克大米${price5}元，买${num5}千克需要多少钱？`;
+                            break;
+                        case 2: // 长方形面积
+                            const len = randomInt(10, 50) + randomInt(1, 9) / 10;
+                            const wid = randomInt(5, 20) + randomInt(1, 9) / 10;
+                            answer = Math.round(len * wid * 100) / 100;
+                            text = `长方形长${len}米，宽${wid}米，面积是多少平方米？`;
+                            break;
+                        case 3: // 平均数问题
+                            const total = randomInt(200, 500);
+                            const num = randomInt(10, 30);
+                            answer = Math.round(total / num * 100) / 100;
+                            text = `${num}名同学总分${total}分，平均每人多少分？`;
+                            break;
+                        case 4: // 正方体体积
+                            const edge = randomInt(3, 10);
+                            answer = edge * edge * edge;
+                            text = `正方体棱长${edge}厘米，体积是多少立方厘米？`;
+                            break;
+                        case 5: // 最大公因数应用
+                            const a = randomInt(2, 5) * 6;
+                            const b = randomInt(2, 5) * 8;
+                            answer = gcd(a, b);
+                            text = `彩带长${a}分米和${b}分米，截成同样长的小段，每段最长多少分米？`;
+                            break;
+                    }
                     break;
 
-                case 6:
-                    const price6 = randomInt(100, 500);
-                    const discount = randomInt(6, 9);
-                    answer = price6 * discount / 10;
-                    text = `一件衣服原价${price6}元，打${discount}折出售，现价是多少元？`;
+                case 6: // 六年级：分数乘除、百分数、折扣、浓度、比例、圆柱圆锥
+                    const type6 = randomInt(1, isHard ? 5 : 4);
+                    switch(type6) {
+                        case 1: // 分数乘法应用题
+                            const total = randomInt(100, 200);
+                            const frac = [1/2, 1/3, 2/5, 3/4][randomInt(0,3)];
+                            answer = total * frac;
+                            text = `全书${total}页，第一天看了全书的${Math.round(frac*100)}/${Math.round(1/frac*100)}，看了多少页？`;
+                            break;
+                        case 2: // 折扣问题
+                            const price = randomInt(120, 500);
+                            const discount = randomInt(6, 9);
+                            answer = price * discount / 10;
+                            text = `一件衣服原价${price}元，打${discount}折出售，现价多少元？`;
+                            break;
+                        case 3: // 百分数增长率
+                            const base = randomInt(50, 150);
+                            const rate = randomInt(10, 30);
+                            answer = base * (1 + rate / 100);
+                            text = `去年产量${base}吨，今年增产${rate}%，今年产量多少吨？`;
+                            break;
+                        case 4: // 圆柱体积
+                            const r = randomInt(3, 8);
+                            const h = randomInt(10, 20);
+                            answer = Math.round(3.14 * r * r * h * 100) / 100;
+                            text = `圆柱底面半径${r}厘米，高${h}厘米，体积是多少立方厘米？（π取3.14）`;
+                            break;
+                        case 5: // 比例应用题
+                            const scale = randomInt(2, 5);
+                            const mapLen = randomInt(3, 10);
+                            answer = mapLen * scale;
+                            text = `地图比例尺1:${scale}000000，图上距离${mapLen}厘米，实际距离多少千米？`;
+                            break;
+                    }
                     break;
 
-                case 7:
-                    const a7 = randomInt(10, 30);
-                    const b7 = randomInt(5, 20);
-                    answer = 2 * (a7 + b7);
-                    text = `一个长方形的长为${a7}cm，宽为${b7}cm，它的周长是多少厘米？`;
+                case 7: // 七年级：一元一次方程应用、有理数实际应用
+                    const type7 = randomInt(1, 3);
+                    switch(type7) {
+                        case 1: // 行程问题
+                            const dist = randomInt(200, 500);
+                            const speed = randomInt(40, 80);
+                            answer = dist / speed;
+                            text = `甲乙两地相距${dist}千米，汽车以${speed}km/h的速度行驶，需要几小时到达？`;
+                            break;
+                        case 2: // 工程问题
+                            const total = randomInt(300, 800);
+                            const per = randomInt(20, 50);
+                            answer = total / per;
+                            text = `工程队每天修路${per}米，修${total}米的路需要多少天？`;
+                            break;
+                        case 3: // 盈亏问题
+                            const cost = randomInt(50, 150);
+                            const rate = randomInt(10, 30);
+                            answer = cost * (1 + rate / 100);
+                            text = `商品进价${cost}元，加价${rate}%出售，售价多少元？`;
+                            break;
+                    }
                     break;
 
                 default:
@@ -801,6 +1351,16 @@
             }
 
             return { text, answer, type: 'word', unit: true };
+        }
+
+        // 辅助函数：求最大公因数
+        function gcd(a, b) {
+            while(b) {
+                let t = b;
+                b = a % b;
+                a = t;
+            }
+            return a;
         }
 
         // ===================== 答题流程控制 =====================
