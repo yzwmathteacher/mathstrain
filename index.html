@@ -558,6 +558,34 @@
    <!-- 把你页面里原来的 <script> 到 </script> 整段全部替换成下面的内容 -->
 <script>
 // ===================== 全局存储兼容封装（底层容错，永不报错） =====================
+// 自动填充欢迎页用户信息
+function showUserInfo() {
+  if (!currentUser) return;
+  const nameInput = document.getElementById("userName");
+  const gradeSelect = document.getElementById("userGrade");
+  if(nameInput) nameInput.value = currentUser.name;
+  if(gradeSelect) gradeSelect.value = currentUser.grade;
+}
+
+// 保存完整训练记录到本地存储
+function saveTrainRecord(score, totalTime, errorList, grade, typeName) {
+  let allRecords = getStorage("trainRecords", []);
+  const newRecord = {
+    date: new Date().toLocaleString(),
+    grade: grade,
+    type: typeName,
+    score: score,
+    totalSeconds: totalTime,
+    useTimeStr: formatTime(totalTime),
+    errorCount: errorList.length,
+    errorList: errorList,
+    totalCount: questionList.length,
+    rightCount: questionList.length - errorList.length
+  };
+  allRecords.push(newRecord);
+  saveStorage("trainRecords", allRecords);
+  console.log("训练记录保存成功", newRecord);
+}
 function saveStorage(key, data) {
     try { localStorage.setItem('math_train_' + key, JSON.stringify(data)); } 
     catch (e) { console.warn('存储写入失败:', key, e); }
@@ -1286,15 +1314,24 @@ function renderResult(score, timeUsed, wrongList, avgTime) {
     if(sugEl) {
         let suggestion = '';
         if(score >= 90) {
-            suggestion = parseFloat(avgTime) < 5
-                ? '正确率和速度都非常优秀，计算功底扎实！可以尝试提升难度挑战高阶题型，继续保持每日练习巩固优势。'
-                : '正确率很高，基础掌握牢固！可以在保证准确的前提下适当提升答题速度，训练计算熟练度。';
-        } else if(score >= 70) {
-            suggestion = '整体表现不错，但还有提升空间。建议针对错题对应的知识点加强专项练习，注意计算过程细节，减少粗心失误。';
-        } else {
-            suggestion = '本次练习正确率有待提升，建议回归课本巩固基础知识点，从基础难度开始循序渐进，坚持每天定量练习，逐步提高计算能力。'       }
-        sugEl.textContent = suggestion;
+           suggestion = parseFloat(avgTime) < 5
+           ? '正确率和速度都非常优秀，计算功底扎实！可以尝试提升难度挑战高阶题型，继续保持每日练习巩固优势。'
+           : '正确率很高，基础掌握牢固！可以在保证准确的前提下适当提升答题速度，训练计算熟练度。';
+    } else if(score >= 70) {
+           suggestion = '整体表现不错，但还有提升空间。建议针对错题对应的知识点加强专项练习，注意计算过程细节，减少粗心失误。';
+    } else {
+          suggestion = '本次练习正确率有待提升，建议回归课本巩固基础知识点，从基础难度开始循序渐进，坚持每天定量练习，逐步提高计算能力。';
     }
+    sugEl.textContent = suggestion;
+    // 【新增：保存训练记录代码，直接粘贴在这行下方】
+    saveTrainRecord(
+      score,
+      totalSeconds,
+      errorList,
+      currentConfig.grade,
+      TYPE_CONFIG[currentConfig.grade].find(item=>item.id === currentConfig.types[0]).name
+    );
+}
 
     // 错题列表渲染
     const wrongWrap = document.getElementById('resultWrongList');
@@ -1918,42 +1955,45 @@ function renderHistory(range = 'all') {
 
         // ===================== 页面初始化入口 =====================
         function init() {
+            console.log("系统初始化开始");
             try {
-                // 加载全局配置
-                settings = getStorage('settings', { darkMode: false, feedback: true });
-                currentUser = getStorage('user', {});
+                 settings = getStorage('settings', { darkMode: false, feedback: true });
+                 currentUser = getStorage('user', null);
 
-                // 应用深色模式
-                applyDarkMode();
+        applyDarkMode();
+        renderGradeOptions();
+        bindAllEvents();
 
-                // 渲染年级选项
-                renderGradeOptions();
+        checkUnfinishedTrain();
+        updateHomeReport();
+        showUserInfo(); // 自动回填用户表单
 
-                // 绑定所有事件
-                bindAllEvents();
+    // 存在用户直接跳首页，免填写
+    if (currentUser && currentUser.name && currentUser.grade) {
+      switchPage('homePage');
+      currentConfig.grade = currentUser.grade;
+      initGradeDefault(currentConfig.grade);
+      console.log("已读取本地用户，自动进入首页");
+    } else {
+      switchPage('welcomePage');
+      console.log("无本地用户，展示注册页");
+    }
+  } catch (globalErr) {
+    console.error("初始化异常，兜底游客账号：", globalErr);
+    currentUser = { name: "游客", school: "", grade: 3 };
+    saveStorage('user', currentUser);
+    switchPage('homePage');
+    initGradeDefault(3);
+  }
+}
 
-                // 检查未完成训练
-                checkUnfinished();
-
-                // 更新首页统计数据
-                updateHomeData();
-
-                // 显示用户信息
-                showUserInfo();
-
-                // 页面跳转逻辑：有用户信息进首页，无则进欢迎页
-                if (currentUser && currentUser.name) {
-                    switchPage('homePage');
-                    initGradeDefault(currentUser.grade || 3);
-                } else {
-                    switchPage('welcomePage');
-                }
-            } catch (globalErr) {
-                console.error('页面全局初始化异常：', globalErr);
-                // 异常兜底，确保首页可访问
-                switchPage('homePage');
-            }
-        }
+// 双保险页面加载监听，不要改动
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(init, 100);
+});
+window.addEventListener('load', ()=>{
+  setTimeout(init, 300);
+});
 
         // DOM加载完成后执行初始化
         document.addEventListener('DOMContentLoaded', init);
