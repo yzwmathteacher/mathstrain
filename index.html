@@ -2240,6 +2240,10 @@
                     sw.classList.add('bg-primary');
                     sw.querySelector('span').style.transform = 'translateX(24px)';
                 } else {
+                                        sw.classList.remove('bg-gray-300');
+                    sw.classList.add('bg-primary');
+                    sw.querySelector('span').style.transform = 'translateX(24px)';
+                } else {
                     sw.classList.remove('bg-primary');
                     sw.classList.add('bg-gray-300');
                     sw.querySelector('span').style.transform = 'translateX(0)';
@@ -2297,6 +2301,7 @@
                     setTimeout(() => location.reload(), 1000);
                 } catch (err) {
                     alert('导入失败，请检查文件格式是否正确');
+                    console.error('导入报错：',err)
                 }
             };
             reader.readAsText(file);
@@ -2306,9 +2311,9 @@
         function updateHomeData() {
             const records = getStorage('records', []);
             const wrongBook = getStorage('wrongBook', []);
-            const totalQ = records.reduce((sum, r) => sum + r.count, 0);
+            const totalQ = records.reduce((sum, r) => sum + (r.count||0), 0);
             const avgAcc = records.length > 0
-                ? Math.round(records.reduce((sum, r) => sum + r.score, 0) / records.length)
+                ? Math.round(records.reduce((sum, r) => sum + (r.score||0), 0) / records.length)
                 : 0;
             const streak = calcStreak(getStorage('checkins', []));
             const pendingReview = wrongBook.filter(w => w.nextReview <= Date.now()).length;
@@ -2328,7 +2333,43 @@
             }
         }
 
-        // 页面初始化入口
+        // ====================== 修复：强制绑定下一题、交卷按钮事件（解决点击无响应）======================
+        function bindExamBtn() {
+            const nextBtn = document.getElementById('nextQuestion');
+            const submitBtn = document.getElementById('submitPaper');
+            if(nextBtn){
+                nextBtn.onclick = function(){
+                    try{
+                        nextQuestion()
+                    }catch(e){
+                        console.error("下一题报错",e)
+                        alert('切换题目失败，请刷新页面重试')
+                    }
+                }
+            }
+            if(submitBtn){
+                submitBtn.onclick = function(){
+                    try{
+                        submitPaper()
+                    }catch(e){
+                        console.error("交卷报错",e)
+                        alert('交卷失败，检查是否完成所有题目')
+                    }
+                }
+            }
+        }
+
+        // 页面初始化入口（增加考试按钮绑定、异常捕获）
+        function init(){
+            try{
+                applySettings();
+                updateHomeData();
+                showUserInfo();
+                bindExamBtn(); // 加载页面立刻绑定答题按钮
+            }catch(e){
+                console.error('页面初始化异常',e)
+            }
+        }
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
