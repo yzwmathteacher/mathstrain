@@ -1793,38 +1793,51 @@ function renderHistoryList() {
         }
 
         // ===================== 全局事件绑定 =====================
-        function bindAllEvents() {
+       function bindAllEvents() {
     // 欢迎页表单提交
-    document.getElementById('welcomeForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const name = document.getElementById('userName').value.trim();
-        const school = document.getElementById('userSchool').value.trim();
-        const grade = document.getElementById('userGrade').value;
-        if (!name) {
-            alert("请填写姓名");
-            return;
-        }
-        currentUser = { name, school, grade, saveTime: new Date().toLocaleString() };
-        saveStorage('user', currentUser);
-        initGradeDefault(grade);
-        switchPage('homePage');
-    });
+    const welcomeForm = document.getElementById('welcomeForm');
+    if (welcomeForm) {
+        welcomeForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('userName');
+            const schoolInput = document.getElementById('userSchool');
+            const gradeSelect = document.getElementById('userGrade');
+            if (!nameInput || !schoolInput || !gradeSelect) return;
+            const name = nameInput.value.trim();
+            const school = schoolInput.value.trim();
+            const grade = gradeSelect.value;
+            if (!name) {
+                alert("请填写姓名");
+                return;
+            }
+            currentUser = { name, school, grade, saveTime: new Date().toLocaleString() };
+            saveStorage('user', currentUser);
+            initGradeDefault(grade);
+            switchPage('homePage');
+        });
+    }
 
     // 跳过欢迎页
-    document.getElementById('skipBtn').addEventListener('click', function () {
-        currentUser = { name: '同学', school: '', grade: 3, saveTime: new Date().toLocaleString() };
-        saveStorage('user', currentUser);
-        initGradeDefault(3);
-        switchPage('homePage');
-    });
+    const skipBtn = document.getElementById('skipBtn');
+    if (skipBtn) {
+        skipBtn.addEventListener('click', function () {
+            currentUser = { name: '同学', school: '', grade: 3, saveTime: new Date().toLocaleString() };
+            saveStorage('user', currentUser);
+            initGradeDefault(3);
+            switchPage('homePage');
+        });
+    }
 
     // 年级选择事件
-    document.getElementById('gradeSelect').addEventListener('click', function (e) {
-        if (e.target.classList.contains('grade-btn')) {
-            const grade = parseInt(e.target.dataset.grade);
-            initGradeDefault(grade);
-        }
-    });
+    const gradeSelect = document.getElementById('gradeSelect');
+    if (gradeSelect) {
+        gradeSelect.addEventListener('click', function (e) {
+            if (e.target.classList.contains('grade-btn')) {
+                const grade = parseInt(e.target.dataset.grade);
+                initGradeDefault(grade);
+            }
+        });
+    }
 
     // 难度选择
     document.querySelectorAll('.diff-btn').forEach(btn => {
@@ -1859,32 +1872,48 @@ function renderHistoryList() {
             currentConfig.mode = this.dataset.mode;
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
             this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-            if (currentConfig.mode === 'time') {
-                document.getElementById('countSetting').classList.add('hidden');
-                document.getElementById('timeSetting').classList.remove('hidden');
-            } else {
-                document.getElementById('countSetting').classList.remove('hidden');
-                document.getElementById('timeSetting').classList.add('hidden');
+            const countSetting = document.getElementById('countSetting');
+            const timeSetting = document.getElementById('timeSetting');
+            if (countSetting && timeSetting) {
+                if (currentConfig.mode === 'time') {
+                    countSetting.classList.add('hidden');
+                    timeSetting.classList.remove('hidden');
+                } else {
+                    countSetting.classList.remove('hidden');
+                    timeSetting.classList.add('hidden');
+                }
             }
         });
     });
 
     // 开始答题按钮
-    document.getElementById('startBtn').addEventListener('click', startQuiz);
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) startBtn.addEventListener('click', startQuiz);
 
     // 继续未完成训练
-    document.getElementById('continueBtn').addEventListener('click', continueQuiz);
+    const continueBtn = document.getElementById('continueBtn');
+    if (continueBtn) continueBtn.addEventListener('click', continueQuiz);
 
     // 答题页操作按钮
-    document.getElementById('prevBtn').addEventListener('click', prevQuestion);
-    document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-    document.getElementById('submitAllBtn').addEventListener('click', function () {
-        if (confirm('确定要提前交卷吗？未作答的题目按错误计算。')) submitQuiz();
-    });
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) prevBtn.addEventListener('click', prevQuestion);
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+
+    const submitAllBtn = document.getElementById('submitAllBtn');
+    if (submitAllBtn) {
+        submitAllBtn.addEventListener('click', function () {
+            if (confirm('确定要提前交卷吗？未作答的题目按错误计算。')) submitQuiz();
+        });
+    }
 
     // 暂停/继续
-    document.getElementById('pauseBtn').addEventListener('click', pauseQuiz);
-    document.getElementById('resumeBtn').addEventListener('click', resumeQuiz);
+    const pauseBtn = document.getElementById('pauseBtn');
+    if (pauseBtn) pauseBtn.addEventListener('click', pauseQuiz);
+
+    const resumeBtn = document.getElementById('resumeBtn');
+    if (resumeBtn) resumeBtn.addEventListener('click', resumeQuiz);
 
     // 符号快捷栏
     document.querySelectorAll('.symbol-btn').forEach(btn => {
@@ -1899,8 +1928,10 @@ function renderHistoryList() {
 
     // 回车提交答案
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && document.getElementById('quizPage').classList.contains('active')) {
-            if (document.activeElement.id === 'answerInput') {
+        if (e.key === 'Enter') {
+            const quizPage = document.getElementById('quizPage');
+            const answerInput = document.getElementById('answerInput');
+            if (quizPage && quizPage.classList.contains('active') && answerInput && document.activeElement.id === 'answerInput') {
                 nextQuestion();
             }
         }
@@ -1916,9 +1947,14 @@ function renderHistoryList() {
     });
 
     // 错题重做相关按钮
-    document.getElementById('practiceWrongBtn').addEventListener('click', () => startWrongPractice('current'));
-    document.getElementById('allWrongBtn').addEventListener('click', () => startWrongPractice('all'));
-    document.getElementById('reviewWrongBtn').addEventListener('click', () => startWrongPractice('review'));
+    const practiceWrongBtn = document.getElementById('practiceWrongBtn');
+    if (practiceWrongBtn) practiceWrongBtn.addEventListener('click', () => startWrongPractice('current'));
+
+    const allWrongBtn = document.getElementById('allWrongBtn');
+    if (allWrongBtn) allWrongBtn.addEventListener('click', () => startWrongPractice('all'));
+
+    const reviewWrongBtn = document.getElementById('reviewWrongBtn');
+    if (reviewWrongBtn) reviewWrongBtn.addEventListener('click', () => startWrongPractice('review'));
 
     // 历史记录筛选
     document.querySelectorAll('[data-range]').forEach(btn => {
@@ -1930,30 +1966,45 @@ function renderHistoryList() {
     });
 
     // 工具页按钮
-    document.getElementById('generatePaperBtn').addEventListener('click', generatePrintPaper);
-    document.getElementById('exportDataBtn').addEventListener('click', exportAllData);
-    document.getElementById('importDataInput').addEventListener('change', importData);
-    document.getElementById('exportWrongBtn').addEventListener('click', exportWrongCSV);
-    document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
+    const generatePaperBtn = document.getElementById('generatePaperBtn');
+    if (generatePaperBtn) generatePaperBtn.addEventListener('click', generatePrintPaper);
+
+    const exportDataBtn = document.getElementById('exportDataBtn');
+    if (exportDataBtn) exportDataBtn.addEventListener('click', exportAllData);
+
+    const importDataInput = document.getElementById('importDataInput');
+    if (importDataInput) importDataInput.addEventListener('change', importData);
+
+    const exportWrongBtn = document.getElementById('exportWrongBtn');
+    if (exportWrongBtn) exportWrongBtn.addEventListener('click', exportWrongCSV);
+
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) clearDataBtn.addEventListener('click', clearAllData);
 
     // 深色模式开关
-    document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
-    document.getElementById('darkSwitch2').addEventListener('click', toggleDarkMode);
+    const darkToggle = document.getElementById('darkToggle');
+    if (darkToggle) darkToggle.addEventListener('click', toggleDarkMode);
+
+    const darkSwitch2 = document.getElementById('darkSwitch2');
+    if (darkSwitch2) darkSwitch2.addEventListener('click', toggleDarkMode);
 
     // 答题反馈开关
-    document.getElementById('feedbackSwitch').addEventListener('click', function () {
-        settings.feedback = !settings.feedback;
-        saveStorage('settings', settings);
-        updateSwitchStyle(this, settings.feedback);
-    });
+    const feedbackSwitch = document.getElementById('feedbackSwitch');
+    if (feedbackSwitch) {
+        feedbackSwitch.addEventListener('click', function () {
+            settings.feedback = !settings.feedback;
+            saveStorage('settings', settings);
+            updateSwitchStyle(this, settings.feedback);
+        });
+    }
 }
 
         // ===================== 页面初始化入口 =====================
         function init() {
-            console.log("系统初始化开始");
-            try {
-                 settings = getStorage('settings', { darkMode: false, feedback: true });
-                 currentUser = getStorage('user', null);
+    console.log("系统初始化开始");
+    try {
+        settings = getStorage('settings', { darkMode: false, feedback: true });
+        currentUser = getStorage('user', null);
 
         applyDarkMode();
         renderGradeOptions();
@@ -1963,35 +2014,31 @@ function renderHistoryList() {
         updateHomeReport();
         showUserInfo(); // 自动回填用户表单
 
-    // 存在用户直接跳首页，免填写
-    if (currentUser && currentUser.name && currentUser.grade) {
-      switchPage('homePage');
-      currentConfig.grade = currentUser.grade;
-      initGradeDefault(currentConfig.grade);
-      console.log("已读取本地用户，自动进入首页");
-    } else {
-      switchPage('welcomePage');
-      console.log("无本地用户，展示注册页");
+        // 存在用户直接跳首页，免填写
+        if (currentUser && currentUser.name && currentUser.grade) {
+            switchPage('homePage');
+            currentConfig.grade = currentUser.grade;
+            initGradeDefault(currentConfig.grade);
+            console.log("已读取本地用户，自动进入首页");
+        } else {
+            switchPage('welcomePage');
+            console.log("无本地用户，展示注册页");
+        }
+    } catch (globalErr) {
+        console.error("初始化异常，兜底游客账号：", globalErr);
+        currentUser = { name: "游客", school: "", grade: 3 };
+        saveStorage('user', currentUser);
+        switchPage('homePage');
+        initGradeDefault(3);
     }
-  } catch (globalErr) {
-    console.error("初始化异常，兜底游客账号：", globalErr);
-    currentUser = { name: "游客", school: "", grade: 3 };
-    saveStorage('user', currentUser);
-    switchPage('homePage');
-    initGradeDefault(3);
-  }
 }
 
-// 双保险页面加载监听，不要改动
-document.addEventListener('DOMContentLoaded', ()=>{
-  setTimeout(init, 100);
+// 仅保留一套延时初始化，防止DOM未渲染完成获取元素null报错
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(() => {
+        init();
+    }, 150);
 });
-window.addEventListener('load', ()=>{
-  setTimeout(init, 300);
-});
-
-        // DOM加载完成后执行初始化
-        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
