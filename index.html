@@ -1421,12 +1421,15 @@ function checkMedals(score, avgSec) {
 }
 
 // ===================== 首页数据统计渲染 =====================
-function updateHomeData() {
-    records = getStorage('records', []);
-    checkins = getStorage('checkins', []);
-    wrongBook = getStorage('wrongBook', []);
-    knowledgeStats = getStorage('knowledge_stats', {});
-    medals = getStorage('medals', []);
+function updateHomeReport() {
+  const records = getStorage("trainRecords", []);
+  const totalTrainNum = records.length;
+  const avgScore = records.length ? (records.reduce((sum,item)=>sum+item.score,0)/records.length).toFixed(1) : 0;
+  const trainTotalDom = document.getElementById("trainTotalNum");
+  const trainAvgDom = document.getElementById("trainAvgScore");
+  if(trainTotalDom) trainTotalDom.textContent = totalTrainNum;
+  if(trainAvgDom) trainAvgDom.textContent = avgScore;
+}
 
     // 总完成题量
     const totalQues = records.reduce((sum, r) => sum + r.count, 0);
@@ -1618,42 +1621,30 @@ function startWrongPractice(mode) {
 }
 
 // ===================== 历史记录渲染（之前截断的完整函数补完） =====================
-function renderHistory(range = 'all') {
-    let records = getStorage('records', []);
-    const container = document.getElementById('historyList');
-    const now = Date.now();
-
-    // 按时间范围过滤
-    if (range === 'today') {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        records = records.filter(r => new Date(r.time).getTime() >= today.getTime());
-    } else if (range === 'week') {
-        const weekAgo = now - 7 * 86400000;
-        records = records.filter(r => new Date(r.time).getTime() >= weekAgo);
-    }
-
-    if (records.length === 0) {
-        container.innerHTML = '<div class="text-center text-gray-400 py-10">暂无训练记录</div>';
-        return;
-    }
-
-    container.innerHTML = records.slice(0, 50).map(r => `
-        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary/50 transition-colors">
-            <div class="flex justify-between items-center">
-                <div>
-                    <div class="font-medium">${r.grade}年级 · ${r.count}道题</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${r.time}</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-xl font-bold ${r.score >= 90 ? 'text-green-600' : r.score >= 70 ? 'text-primary' : 'text-red-500'}">
-                        ${r.score}分
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">正确率 ${r.accuracy} · 用时 ${formatTime(r.timeUsed)}</div>
-                </div>
-            </div>
-        </div>
-    `).join('');
+function renderHistoryList() {
+  const historyWrap = document.getElementById("historyWrap");
+  if(!historyWrap) return;
+  const records = getStorage("trainRecords", []);
+  if(records.length === 0){
+    historyWrap.innerHTML = "<div class='text-center py-10'>暂无练习记录，快去完成一次训练吧</div>";
+    return;
+  }
+  const reverseRecords = records.reverse();
+  let html = "";
+  reverseRecords.forEach(item=>{
+    html += `
+    <div class="border p-4 rounded-lg mb-3">
+      <div class="flex justify-between">
+        <span>练习时间：${item.date}</span>
+        <span class="font-bold text-blue-600">得分：${item.score}分</span>
+      </div>
+      <div>年级：${item.grade}年级 | 题型：${item.type}</div>
+      <div>总题${item.totalCount}道 | 正确${item.rightCount}道 | 错题${item.errorCount}道</div>
+      <div>总用时：${item.useTimeStr}</div>
+    </div>
+    `;
+  })
+  historyWrap.innerHTML = html;
 }
 
         // ===================== 打印试卷生成 =====================
@@ -1803,155 +1794,159 @@ function renderHistory(range = 'all') {
 
         // ===================== 全局事件绑定 =====================
         function bindAllEvents() {
-            // 欢迎页表单提交
-            document.getElementById('welcomeForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                const name = document.getElementById('userName').value.trim();
-                const school = document.getElementById('userSchool').value.trim();
-                const grade = document.getElementById('userGrade').value;
-                currentUser = { name, school, grade };
-                saveStorage('user', currentUser);
-                initGradeDefault(grade);
-                switchPage('homePage');
-            });
-
-            // 跳过欢迎页
-            document.getElementById('skipBtn').addEventListener('click', function () {
-                currentUser = { name: '同学', school: '', grade: 3 };
-                saveStorage('user', currentUser);
-                initGradeDefault(3);
-                switchPage('homePage');
-            });
-
-            // 年级选择事件
-            document.getElementById('gradeSelect').addEventListener('click', function (e) {
-                if (e.target.classList.contains('grade-btn')) {
-                    const grade = parseInt(e.target.dataset.grade);
-                    initGradeDefault(grade);
-                }
-            });
-
-            // 难度选择
-            document.querySelectorAll('.diff-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    currentConfig.difficulty = this.dataset.diff;
-                    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
-                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-                });
-            });
-
-            // 题量选择
-            document.querySelectorAll('.count-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    currentConfig.count = parseInt(this.dataset.count);
-                    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
-                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-                });
-            });
-
-            // 限时模式时长选择
-            document.querySelectorAll('.time-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    currentConfig.time = parseInt(this.dataset.time);
-                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
-                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-                });
-            });
-
-            // 训练模式切换
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    currentConfig.mode = this.dataset.mode;
-                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
-                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-                    if (currentConfig.mode === 'time') {
-                        document.getElementById('countSetting').classList.add('hidden');
-                        document.getElementById('timeSetting').classList.remove('hidden');
-                    } else {
-                        document.getElementById('countSetting').classList.remove('hidden');
-                        document.getElementById('timeSetting').classList.add('hidden');
-                    }
-                });
-            });
-
-            // 开始答题按钮
-            document.getElementById('startBtn').addEventListener('click', startQuiz);
-
-            // 继续未完成训练
-            document.getElementById('continueBtn').addEventListener('click', continueQuiz);
-
-            // 答题页操作按钮
-            document.getElementById('prevBtn').addEventListener('click', prevQuestion);
-            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-            document.getElementById('submitAllBtn').addEventListener('click', function () {
-                if (confirm('确定要提前交卷吗？未作答的题目按错误计算。')) submitQuiz();
-            });
-
-            // 暂停/继续
-            document.getElementById('pauseBtn').addEventListener('click', pauseQuiz);
-            document.getElementById('resumeBtn').addEventListener('click', resumeQuiz);
-
-            // 符号快捷栏
-            document.querySelectorAll('.symbol-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const input = document.getElementById('answerInput');
-                    if (input) {
-                        input.value += this.dataset.s;
-                        input.focus();
-                    }
-                });
-            });
-
-            // 回车提交答案
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && document.getElementById('quizPage').classList.contains('active')) {
-                    if (document.activeElement.id === 'answerInput') {
-                        nextQuestion();
-                    }
-                }
-            });
-
-            // 错题筛选
-            document.querySelectorAll('#wrongFilter .tag-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    document.querySelectorAll('#wrongFilter .tag-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    renderWrongBook(this.dataset.filter);
-                });
-            });
-
-            // 错题重做相关按钮
-            document.getElementById('practiceWrongBtn').addEventListener('click', () => startWrongPractice('current'));
-            document.getElementById('allWrongBtn').addEventListener('click', () => startWrongPractice('all'));
-            document.getElementById('reviewWrongBtn').addEventListener('click', () => startWrongPractice('review'));
-
-            // 历史记录筛选
-            document.querySelectorAll('[data-range]').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    renderHistory(this.dataset.range);
-                });
-            });
-
-            // 工具页按钮
-            document.getElementById('generatePaperBtn').addEventListener('click', generatePrintPaper);
-            document.getElementById('exportDataBtn').addEventListener('click', exportAllData);
-            document.getElementById('importDataInput').addEventListener('change', importData);
-            document.getElementById('exportWrongBtn').addEventListener('click', exportWrongCSV);
-            document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
-
-            // 深色模式开关
-            document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
-            document.getElementById('darkSwitch2').addEventListener('click', toggleDarkMode);
-
-            // 答题反馈开关
-            document.getElementById('feedbackSwitch').addEventListener('click', function () {
-                settings.feedback = !settings.feedback;
-                saveStorage('settings', settings);
-                updateSwitchStyle(this, settings.feedback);
-            });
+    // 欢迎页表单提交
+    document.getElementById('welcomeForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const name = document.getElementById('userName').value.trim();
+        const school = document.getElementById('userSchool').value.trim();
+        const grade = document.getElementById('userGrade').value;
+        if (!name) {
+            alert("请填写姓名");
+            return;
         }
+        currentUser = { name, school, grade, saveTime: new Date().toLocaleString() };
+        saveStorage('user', currentUser);
+        initGradeDefault(grade);
+        switchPage('homePage');
+    });
+
+    // 跳过欢迎页
+    document.getElementById('skipBtn').addEventListener('click', function () {
+        currentUser = { name: '同学', school: '', grade: 3, saveTime: new Date().toLocaleString() };
+        saveStorage('user', currentUser);
+        initGradeDefault(3);
+        switchPage('homePage');
+    });
+
+    // 年级选择事件
+    document.getElementById('gradeSelect').addEventListener('click', function (e) {
+        if (e.target.classList.contains('grade-btn')) {
+            const grade = parseInt(e.target.dataset.grade);
+            initGradeDefault(grade);
+        }
+    });
+
+    // 难度选择
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            currentConfig.difficulty = this.dataset.diff;
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+            this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+        });
+    });
+
+    // 题量选择
+    document.querySelectorAll('.count-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            currentConfig.count = parseInt(this.dataset.count);
+            document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+            this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+        });
+    });
+
+    // 限时模式时长选择
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            currentConfig.time = parseInt(this.dataset.time);
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+            this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+        });
+    });
+
+    // 训练模式切换
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            currentConfig.mode = this.dataset.mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+            this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+            if (currentConfig.mode === 'time') {
+                document.getElementById('countSetting').classList.add('hidden');
+                document.getElementById('timeSetting').classList.remove('hidden');
+            } else {
+                document.getElementById('countSetting').classList.remove('hidden');
+                document.getElementById('timeSetting').classList.add('hidden');
+            }
+        });
+    });
+
+    // 开始答题按钮
+    document.getElementById('startBtn').addEventListener('click', startQuiz);
+
+    // 继续未完成训练
+    document.getElementById('continueBtn').addEventListener('click', continueQuiz);
+
+    // 答题页操作按钮
+    document.getElementById('prevBtn').addEventListener('click', prevQuestion);
+    document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+    document.getElementById('submitAllBtn').addEventListener('click', function () {
+        if (confirm('确定要提前交卷吗？未作答的题目按错误计算。')) submitQuiz();
+    });
+
+    // 暂停/继续
+    document.getElementById('pauseBtn').addEventListener('click', pauseQuiz);
+    document.getElementById('resumeBtn').addEventListener('click', resumeQuiz);
+
+    // 符号快捷栏
+    document.querySelectorAll('.symbol-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const input = document.getElementById('answerInput');
+            if (input) {
+                input.value += this.dataset.s;
+                input.focus();
+            }
+        });
+    });
+
+    // 回车提交答案
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && document.getElementById('quizPage').classList.contains('active')) {
+            if (document.activeElement.id === 'answerInput') {
+                nextQuestion();
+            }
+        }
+    });
+
+    // 错题筛选
+    document.querySelectorAll('#wrongFilter .tag-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#wrongFilter .tag-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            renderWrongBook(this.dataset.filter);
+        });
+    });
+
+    // 错题重做相关按钮
+    document.getElementById('practiceWrongBtn').addEventListener('click', () => startWrongPractice('current'));
+    document.getElementById('allWrongBtn').addEventListener('click', () => startWrongPractice('all'));
+    document.getElementById('reviewWrongBtn').addEventListener('click', () => startWrongPractice('review'));
+
+    // 历史记录筛选
+    document.querySelectorAll('[data-range]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            renderHistory(this.dataset.range);
+        });
+    });
+
+    // 工具页按钮
+    document.getElementById('generatePaperBtn').addEventListener('click', generatePrintPaper);
+    document.getElementById('exportDataBtn').addEventListener('click', exportAllData);
+    document.getElementById('importDataInput').addEventListener('change', importData);
+    document.getElementById('exportWrongBtn').addEventListener('click', exportWrongCSV);
+    document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
+
+    // 深色模式开关
+    document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
+    document.getElementById('darkSwitch2').addEventListener('click', toggleDarkMode);
+
+    // 答题反馈开关
+    document.getElementById('feedbackSwitch').addEventListener('click', function () {
+        settings.feedback = !settings.feedback;
+        saveStorage('settings', settings);
+        updateSwitchStyle(this, settings.feedback);
+    });
+}
 
         // ===================== 页面初始化入口 =====================
         function init() {
