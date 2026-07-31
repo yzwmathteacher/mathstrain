@@ -1998,7 +1998,20 @@ function renderHistoryList() {
         });
     }
 }
+// 检测是否存在未完成的答题训练
+function checkUnfinishedTrain() {
+    const unfinished = getStorage('unfinishedQuiz', null);
+    const continueBtn = document.getElementById('continueBtn');
+    if (!continueBtn) return;
 
+    // 有未完成记录，显示继续做题按钮
+    if (unfinished && unfinished.questions && unfinished.questions.length > 0) {
+        continueBtn.classList.remove('hidden');
+    } else {
+        // 无未完成训练，隐藏按钮
+        continueBtn.classList.add('hidden');
+    }
+}
         // ===================== 页面初始化入口 =====================
         function init() {
     console.log("系统初始化开始");
