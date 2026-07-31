@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中小学数学计算训练系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>杨老师数学计算训练系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -23,120 +23,85 @@
             }
         }
     </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .watermark {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                color: rgba(22, 93, 255, 0.1);
-                font-size: 14px;
-                pointer-events: none;
-                z-index: 0;
-            }
-            .page {
-                display: none;
-            }
-            .page.active {
-                display: block;
-            }
-            .input-focus {
-                @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
-            }
-            .btn-primary {
-                @apply bg-primary hover:bg-secondary text-white font-medium py-2 px-4 rounded-lg transition-colors;
-            }
-            .btn-outline {
-                @apply border border-gray-300 hover:border-primary text-gray-700 py-2 px-4 rounded-lg transition-colors;
-            }
-            .card {
-                @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700;
-            }
-            .tag-btn {
-                @apply px-3 py-1 rounded-full text-sm border border-gray-200 dark:border-gray-600 cursor-pointer transition-all;
-            }
-            .tag-btn.active {
-                @apply bg-primary text-white border-primary;
-            }
+    <style>
+        * { box-sizing: border-box; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .watermark {
+            position: fixed; bottom: 12px; right: 16px;
+            color: rgba(22, 93, 255, 0.1); font-size: 12px;
+            pointer-events: none; z-index: 0;
         }
+        .tag-btn.active {
+            background-color: #165DFF; color: #fff; border-color: #165DFF;
+        }
+        .fraction-input {
+            display: inline-flex; flex-direction: column; align-items: center;
+            vertical-align: middle;
+        }
+        .fraction-line {
+            width: 100%; height: 2px; background: #333; margin: 2px 0;
+        }
+        .dark .fraction-line { background: #eee; }
 
         /* 打印样式 */
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printArea, #printArea * {
-                visibility: visible;
-            }
-            #printArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 20px;
-            }
-            .no-print {
-                display: none !important;
-            }
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+            .no-print { display: none !important; }
         }
 
-        /* 分数输入样式 */
-        .fraction-input {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
+        /* 日历样式 */
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; font-size: 12px;
         }
-        .fraction-line {
-            width: 60px;
-            height: 2px;
-            background: #333;
+        .calendar-day.checked {
+            background: #165DFF; color: #fff;
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-100 transition-colors">
+<body class="bg-gray-50 dark:bg-gray-900 dark:text-gray-100 min-h-screen transition-colors">
     <!-- 水印 -->
-    <div class="watermark">数学计算训练系统 </div>
+    <div class="watermark">杨老师数学计算训练系统 · 纯本地离线使用</div>
 
     <!-- 顶部导航 -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-700">
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 border-b border-gray-100 dark:border-gray-700">
         <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-lg md:text-xl font-bold text-primary">数学计算训练系统</h1>
-            <div class="flex items-center gap-3">
-                <button id="darkModeBtn" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary">
-                    🌙 护眼模式
-                </button>
-                <span id="showUserName" class="text-sm text-gray-600 dark:text-gray-300 hidden"></span>
-                <button id="settingBtn" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary">
-                    ⚙️ 设置
-                </button>
+            <div class="flex items-center gap-3 text-sm">
+                <span id="showUser" class="text-gray-600 dark:text-gray-300 hidden"></span>
+                <button id="darkToggle" class="text-gray-600 dark:text-gray-300 hover:text-primary">🌙 护眼</button>
+                <button onclick="switchPage('homePage')" class="text-gray-600 dark:text-gray-300 hover:text-primary">首页</button>
             </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-6">
-        <!-- 1. 欢迎页（可选填信息，免注册） -->
+        <!-- 1. 欢迎注册页（兼容原有流程，可跳过） -->
         <div id="welcomePage" class="page active">
-            <div class="max-w-md mx-auto card mt-10">
+            <div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mt-10">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-light dark:bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl">📐</span>
                     </div>
-                    <h2 class="text-2xl font-bold mb-2">欢迎使用杨老师计算训练系统</h2>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">填写信息可获得个性化分析，也可直接跳过使用</p>
+                    <h2 class="text-2xl font-bold mb-2">欢迎加入杨老师计算训练</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">填写信息开启训练之旅（也可跳过直接使用）</p>
                 </div>
                 <form id="welcomeForm" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">学生姓名（选填）</label>
-                        <input type="text" id="userName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg input-focus" placeholder="请输入姓名">
+                        <label class="block text-sm font-medium mb-1">学生姓名</label>
+                        <input type="text" id="userName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" placeholder="请输入姓名">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">所在学校（选填）</label>
-                        <input type="text" id="userSchool" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg input-focus" placeholder="请输入学校名称">
+                        <label class="block text-sm font-medium mb-1">所在学校</label>
+                        <input type="text" id="userSchool" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" placeholder="请输入学校名称">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">当前年级</label>
-                        <select id="userGrade" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg input-focus">
+                        <select id="userGrade" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
                             <option value="1">一年级</option>
                             <option value="2">二年级</option>
                             <option value="3">三年级</option>
@@ -148,10 +113,10 @@
                             <option value="9">九年级</option>
                         </select>
                     </div>
-                    <button type="submit" class="w-full btn-primary py-3 mt-2">
-                        进入系统
+                    <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 rounded-lg transition-colors mt-2">
+                        进入训练系统
                     </button>
-                    <button type="button" id="skipBtn" class="w-full btn-outline py-2 text-sm">
+                    <button type="button" id="skipBtn" class="w-full border border-gray-300 dark:border-gray-600 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:border-primary transition-colors">
                         跳过，直接使用
                     </button>
                 </form>
@@ -160,125 +125,107 @@
 
         <!-- 2. 首页（选题中心） -->
         <div id="homePage" class="page">
-            <!-- 功能导航 -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                <button onclick="switchPage('homePage')" class="card text-center py-4 border-primary text-primary font-medium">
-                    📝 开始训练
-                </button>
-                <button onclick="switchPage('statsPage')" class="card text-center py-4 hover:border-primary/50 transition-colors">
-                    📊 数据统计
-                </button>
-                <button onclick="switchPage('wrongPage')" class="card text-center py-4 hover:border-primary/50 transition-colors">
-                    ❌ 错题本
-                </button>
-                <button onclick="switchPage('historyPage')" class="card text-center py-4 hover:border-primary/50 transition-colors">
-                    📋 历史记录
-                </button>
-                <button onclick="switchPage('toolPage')" class="card text-center py-4 hover:border-primary/50 transition-colors">
-                    🛠️ 工具中心
-                </button>
-            </div>
-
-            <!-- 快速数据概览 -->
-            <div class="grid grid-cols-4 gap-3 mb-6">
-                <div class="card text-center p-4">
-                    <div class="text-xl font-bold text-primary" id="homeTotal">0</div>
+            <!-- 快捷数据概览 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="homeTotal">0</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">累计做题</div>
                 </div>
-                <div class="card text-center p-4">
-                    <div class="text-xl font-bold text-primary" id="homeAcc">0%</div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="homeAcc">0%</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">平均正确率</div>
                 </div>
-                <div class="card text-center p-4">
-                    <div class="text-xl font-bold text-primary" id="homeDay">0</div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="homeStreak">0</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">连续打卡</div>
                 </div>
-                <div class="card text-center p-4">
-                    <div class="text-xl font-bold text-primary" id="homeWrong">0</div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="homeWrong">0</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">待复习错题</div>
                 </div>
             </div>
 
-            <div class="card">
+            <!-- 功能导航 -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                <button onclick="switchPage('homePage')" class="bg-white dark:bg-gray-800 py-4 rounded-xl border-2 border-primary text-primary font-medium shadow-sm">
+                    📝 开始训练
+                </button>
+                <button onclick="switchPage('statsPage')" class="bg-white dark:bg-gray-800 py-4 rounded-xl border-2 border-transparent hover:border-primary/50 transition-colors shadow-sm">
+                    📊 成绩统计
+                </button>
+                <button onclick="switchPage('wrongPage')" class="bg-white dark:bg-gray-800 py-4 rounded-xl border-2 border-transparent hover:border-primary/50 transition-colors shadow-sm">
+                    ❌ 错题本
+                </button>
+                <button onclick="switchPage('historyPage')" class="bg-white dark:bg-gray-800 py-4 rounded-xl border-2 border-transparent hover:border-primary/50 transition-colors shadow-sm">
+                    📋 历史记录
+                </button>
+                <button onclick="switchPage('toolPage')" class="bg-white dark:bg-gray-800 py-4 rounded-xl border-2 border-transparent hover:border-primary/50 transition-colors shadow-sm">
+                    🛠️ 工具中心
+                </button>
+            </div>
+
+            <!-- 未完成训练提示 -->
+            <div id="continueBox" class="mb-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex justify-between items-center hidden">
+                <span class="text-sm">检测到未完成的训练，是否继续作答？</span>
+                <button id="continueBtn" class="text-primary text-sm font-medium">继续训练</button>
+            </div>
+
+            <!-- 训练配置面板 -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                 <h2 class="text-lg font-bold mb-5">配置训练内容</h2>
-                
+
                 <!-- 训练模式 -->
                 <div class="mb-5">
                     <label class="block text-sm font-medium mb-2">训练模式</label>
                     <div class="grid grid-cols-2 gap-3" id="modeSelect">
-                        <button data-mode="count" class="mode-btn py-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors active">
-                            定量刷题
-                        </button>
-                        <button data-mode="time" class="mode-btn py-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">
-                            限时竞速
-                        </button>
+                        <button data-mode="count" class="mode-btn tag-btn active py-2 rounded-lg border">定量刷题</button>
+                        <button data-mode="time" class="mode-btn tag-btn py-2 rounded-lg border">限时竞速</button>
+                    </div>
+                </div>
+
+                <!-- 题量/时长 -->
+                <div class="mb-5" id="countSetting">
+                    <label class="block text-sm font-medium mb-2">题目数量</label>
+                    <div class="grid grid-cols-4 gap-3" id="countSelect">
+                        <button data-count="10" class="count-btn tag-btn py-2 rounded-lg border">10道</button>
+                        <button data-count="20" class="count-btn tag-btn active py-2 rounded-lg border">20道</button>
+                        <button data-count="30" class="count-btn tag-btn py-2 rounded-lg border">30道</button>
+                        <button data-count="50" class="count-btn tag-btn py-2 rounded-lg border">50道</button>
+                    </div>
+                </div>
+                <div class="mb-5 hidden" id="timeSetting">
+                    <label class="block text-sm font-medium mb-2">训练时长</label>
+                    <div class="grid grid-cols-4 gap-3">
+                        <button data-time="5" class="time-btn tag-btn py-2 rounded-lg border">5分钟</button>
+                        <button data-time="10" class="time-btn tag-btn active py-2 rounded-lg border">10分钟</button>
+                        <button data-time="15" class="time-btn tag-btn py-2 rounded-lg border">15分钟</button>
+                        <button data-time="20" class="time-btn tag-btn py-2 rounded-lg border">20分钟</button>
                     </div>
                 </div>
 
                 <!-- 年级选择 -->
                 <div class="mb-5">
                     <label class="block text-sm font-medium mb-2">选择年级</label>
-                    <div class="grid grid-cols-3 md:grid-cols-5 gap-2" id="gradeSelect">
-                        <button data-grade="1" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">一年级</button>
-                        <button data-grade="2" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">二年级</button>
-                        <button data-grade="3" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">三年级</button>
-                        <button data-grade="4" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">四年级</button>
-                        <button data-grade="5" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">五年级</button>
-                        <button data-grade="6" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">六年级</button>
-                        <button data-grade="7" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">七年级</button>
-                        <button data-grade="8" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">八年级</button>
-                        <button data-grade="9" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">九年级</button>
-                    </div>
+                    <div class="grid grid-cols-3 md:grid-cols-5 gap-2" id="gradeSelect"></div>
                 </div>
 
-                <!-- 题型选择（专项多选） -->
+                <!-- 题型选择（多选） -->
                 <div class="mb-5">
                     <label class="block text-sm font-medium mb-2">选择题型（可多选，默认全选）</label>
-                    <div class="flex flex-wrap gap-2" id="typeSelect">
-                        <!-- 动态渲染题型 -->
-                    </div>
+                    <div class="flex flex-wrap gap-2" id="typeSelect"></div>
                 </div>
 
                 <!-- 难度选择 -->
-                <div class="mb-5">
+                <div class="mb-6">
                     <label class="block text-sm font-medium mb-2">难度等级</label>
                     <div class="grid grid-cols-3 gap-3" id="difficultySelect">
-                        <button data-difficulty="basic" class="diff-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">基础版</button>
-                        <button data-difficulty="auto" class="diff-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors active">AI自适应</button>
-                        <button data-difficulty="hard" class="diff-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">提升版</button>
+                        <button data-diff="basic" class="diff-btn tag-btn py-2 rounded-lg border">基础版</button>
+                        <button data-diff="auto" class="diff-btn tag-btn active py-2 rounded-lg border">AI自适应</button>
+                        <button data-diff="hard" class="diff-btn tag-btn py-2 rounded-lg border">提升版</button>
                     </div>
                 </div>
 
-                <!-- 题量/时间设置 -->
-                <div class="mb-6" id="countSetting">
-                    <label class="block text-sm font-medium mb-2">题目数量</label>
-                    <div class="grid grid-cols-4 gap-3" id="countSelect">
-                        <button data-count="10" class="count-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">10道</button>
-                        <button data-count="20" class="count-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors active">20道</button>
-                        <button data-count="30" class="count-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">30道</button>
-                        <button data-count="50" class="count-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">50道</button>
-                    </div>
-                </div>
-
-                <div class="mb-6 hidden" id="timeSetting">
-                    <label class="block text-sm font-medium mb-2">训练时长</label>
-                    <div class="grid grid-cols-4 gap-3">
-                        <button data-time="5" class="time-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">5分钟</button>
-                        <button data-time="10" class="time-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors active">10分钟</button>
-                        <button data-time="15" class="time-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">15分钟</button>
-                        <button data-time="20" class="time-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors">20分钟</button>
-                    </div>
-                </div>
-
-                <!-- 继续未完成训练 -->
-                <div id="continueTrainBox" class="mb-4 hidden">
-                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex justify-between items-center">
-                        <span class="text-sm">检测到未完成的训练，是否继续？</span>
-                        <button id="continueTrainBtn" class="text-primary text-sm font-medium">继续训练</button>
-                    </div>
-                </div>
-
-                <button id="startBtn" class="w-full btn-primary py-3 text-base disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                <button id="startBtn" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
                     开始答题
                 </button>
             </div>
@@ -286,8 +233,8 @@
 
         <!-- 3. 答题页面 -->
         <div id="quizPage" class="page">
-            <div class="card">
-                <!-- 答题头部 -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+                <!-- 头部信息 -->
                 <div class="flex justify-between items-center mb-5 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div class="text-sm text-gray-600 dark:text-gray-400">
                         <span id="quizProgress">第 1 / 20 题</span>
@@ -296,63 +243,70 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="text-lg font-mono font-bold text-primary" id="timer">00:00</div>
-                        <button id="pauseBtn" class="text-sm btn-outline py-1 px-3">暂停</button>
+                        <button id="pauseBtn" class="text-sm border border-gray-300 dark:border-gray-600 px-3 py-1 rounded hover:border-primary transition-colors">暂停</button>
                     </div>
                 </div>
 
-                <!-- 题目区域 -->
+                <!-- 题目 -->
                 <div class="text-center py-8">
-                    <div id="questionText" class="text-xl md:text-2xl font-medium mb-6 min-h-[50px]">
+                    <div id="questionText" class="text-xl md:text-2xl font-medium mb-6 min-h-[60px]">
                         题目加载中...
                     </div>
                     
                     <!-- 答案输入区 -->
                     <div class="max-w-xs mx-auto" id="answerContainer">
-                        <input type="text" id="answerInput" class="w-full text-center text-xl py-3 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-lg input-focus" placeholder="请输入答案" autocomplete="off">
+                        <input type="text" id="answerInput" autocomplete="off" 
+                            class="w-full text-center text-xl py-3 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                            placeholder="请输入答案">
                     </div>
 
-                    <!-- 快捷符号按钮 -->
+                    <!-- 符号快捷栏 -->
                     <div class="flex justify-center gap-2 mt-4 flex-wrap" id="symbolBar">
-                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary" data-symbol="/">/ 分数</button>
-                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary" data-symbol="²">² 平方</button>
-                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary" data-symbol="³">³ 立方</button>
-                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary" data-symbol="√">√ 根号</button>
-                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary" data-symbol="π">π</button>
+                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary transition-colors" data-s="/">/ 分数</button>
+                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary transition-colors" data-s="²">² 平方</button>
+                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary transition-colors" data-s="³">³ 立方</button>
+                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary transition-colors" data-s="√">√ 根号</button>
+                        <button class="symbol-btn px-3 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm hover:border-primary transition-colors" data-s="π">π</button>
                     </div>
 
                     <!-- 正误反馈 -->
-                    <div id="feedbackTip" class="mt-4 h-6 text-sm font-medium hidden"></div>
+                    <div id="feedbackTip" class="mt-4 h-6 text-sm font-medium"></div>
                 </div>
 
                 <!-- 操作按钮 -->
                 <div class="flex justify-between mt-6">
-                    <button id="prevBtn" class="btn-outline" disabled>上一题</button>
-                    <button id="submitAllBtn" class="btn-outline">提前交卷</button>
-                    <button id="nextBtn" class="btn-primary">下一题</button>
+                    <button id="prevBtn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" disabled>上一题</button>
+                    <button id="submitAllBtn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">提前交卷</button>
+                    <button id="nextBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">下一题</button>
                 </div>
             </div>
         </div>
 
         <!-- 暂停弹窗 -->
         <div id="pauseModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
-            <div class="card w-80 text-center">
-                <h3 class="text-lg font-bold mb-4">训练已暂停</h3>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">计时已停止，点击继续恢复训练</p>
-                <button id="resumeBtn" class="btn-primary w-full">继续训练</button>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-8 w-80 text-center">
+                <h3 class="text-lg font-bold mb-2">训练已暂停</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">计时已停止，点击继续恢复训练</p>
+                <button id="resumeBtn" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-secondary transition-colors">
+                    继续训练
+                </button>
+                <button onclick="backHome()" class="w-full mt-3 border border-gray-300 dark:border-gray-600 py-2 rounded-lg text-sm">
+                    返回首页（自动保存进度）
+                </button>
             </div>
         </div>
 
         <!-- 4. 结果页面 -->
         <div id="resultPage" class="page">
-            <div class="card mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700">
                 <div class="text-center mb-6">
                     <div class="text-5xl font-bold text-primary mb-2" id="resultScore">0</div>
                     <div class="text-gray-500 dark:text-gray-400">本次得分</div>
                 </div>
 
-                <div class="grid grid-cols-4 gap-3 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                     <div class="bg-light dark:bg-primary/10 rounded-lg p-3 text-center">
-                        <div class="text-lg font-bold text-primary" id="resultAccuracy">0%</div>
+                        <div class="text-lg font-bold text-primary" id="resultAcc">0%</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">正确率</div>
                     </div>
                     <div class="bg-light dark:bg-primary/10 rounded-lg p-3 text-center">
@@ -364,12 +318,12 @@
                         <div class="text-xs text-gray-600 dark:text-gray-400">错题数</div>
                     </div>
                     <div class="bg-light dark:bg-primary/10 rounded-lg p-3 text-center">
-                        <div class="text-lg font-bold text-primary" id="resultSpeed">0</div>
-                        <div class="text-xs text-gray-600 dark:text-gray-400">秒/题</div>
+                        <div class="text-lg font-bold text-primary" id="resultSpeed">0s</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400">平均每题</div>
                     </div>
                 </div>
 
-                <!-- 学习评语 -->
+                <!-- 学习建议 -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6 border-l-4 border-primary">
                     <h3 class="font-bold text-primary mb-2">💡 学习评价与建议</h3>
                     <p id="suggestionText" class="text-sm leading-relaxed text-gray-700 dark:text-gray-300"></p>
@@ -383,25 +337,23 @@
             </div>
 
             <!-- 错题详情 -->
-            <div class="card mb-6" id="wrongDetailSection">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700" id="wrongDetailSection">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold">错题详情与解析</h3>
-                    <button id="practiceWrongBtn" class="text-primary text-sm">重做错题</button>
+                    <button id="practiceWrongBtn" class="text-primary text-sm">重做本组错题</button>
                 </div>
-                <div id="wrongList" class="space-y-3">
-                    <!-- 错题动态插入 -->
-                </div>
+                <div id="wrongList" class="space-y-3"></div>
             </div>
 
             <div class="flex gap-4">
-                <button onclick="switchPage('homePage')" class="flex-1 btn-outline">返回首页</button>
-                <button onclick="restartQuiz()" class="flex-1 btn-primary">再练一组</button>
+                <button onclick="switchPage('homePage')" class="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">返回首页</button>
+                <button onclick="restartQuiz()" class="flex-1 py-3 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">再练一组</button>
             </div>
         </div>
 
         <!-- 5. 统计页面 -->
         <div id="statsPage" class="page">
-            <div class="card mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700">
                 <h2 class="text-lg font-bold mb-4">成绩趋势分析</h2>
                 <div class="h-64">
                     <canvas id="scoreChart"></canvas>
@@ -410,70 +362,71 @@
 
             <!-- 数据看板 -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="card text-center p-4">
-                    <div class="text-2xl font-bold text-primary" id="totalTrainCount">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">总训练次数</div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="totalTrain">0</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">总训练次数</div>
                 </div>
-                <div class="card text-center p-4">
-                    <div class="text-2xl font-bold text-primary" id="totalQuestionCount">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">累计做题</div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="totalQ">0</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">累计做题</div>
                 </div>
-                <div class="card text-center p-4">
-                    <div class="text-2xl font-bold text-primary" id="avgAccuracy">0%</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">平均正确率</div>
-                </div>
-                <div class="card text-center p-4">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
                     <div class="text-2xl font-bold text-primary" id="bestScore">0%</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">历史最佳</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">历史最佳</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-primary" id="avgSpeed">0s</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">平均答题速度</div>
                 </div>
             </div>
 
             <!-- 薄弱知识点 -->
-            <div class="card mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700">
                 <h3 class="font-bold mb-4">📉 薄弱知识点 TOP5</h3>
                 <div id="weakPoints" class="space-y-2">
-                    <div class="text-center text-gray-400 py-6">暂无足够数据，多做练习后生成分析</div>
+                    <div class="text-center text-gray-400 py-6 text-sm">多做练习后生成薄弱点分析</div>
                 </div>
             </div>
 
             <!-- 打卡日历 -->
-            <div class="card mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold">📅 打卡日历</h3>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">连续打卡 <span id="streakDays" class="text-primary font-bold">0</span> 天</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">连续打卡 <span id="streakDay" class="text-primary font-bold">0</span> 天</div>
                 </div>
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
-                    <!-- 日历动态生成 -->
+                <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 mb-2">
+                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
                 </div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
             </div>
 
             <!-- 勋章墙 -->
-            <div class="card">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                 <h3 class="font-bold mb-4">🏆 我的勋章</h3>
                 <div id="medalWall" class="grid grid-cols-3 md:grid-cols-6 gap-4 text-center">
-                    <!-- 勋章动态生成 -->
+                    <!-- 动态生成 -->
                 </div>
             </div>
         </div>
 
         <!-- 6. 错题本页面 -->
         <div id="wrongPage" class="page">
-            <div class="card mb-6">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-100 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
                     <h2 class="text-lg font-bold">我的错题本</h2>
                     <div class="flex gap-2">
-                        <button id="reviewWrongBtn" class="btn-primary text-sm">间隔复习</button>
-                        <button id="allWrongPracticeBtn" class="btn-outline text-sm">全部重做</button>
+                        <button id="reviewWrongBtn" class="bg-primary text-white text-sm px-3 py-1.5 rounded-lg hover:bg-secondary transition-colors">间隔复习</button>
+                        <button id="allWrongBtn" class="border border-gray-300 dark:border-gray-600 text-sm px-3 py-1.5 rounded-lg">全部重做</button>
                     </div>
                 </div>
 
                 <!-- 筛选标签 -->
                 <div class="flex gap-2 mb-4 flex-wrap" id="wrongFilter">
-                    <button class="tag-btn active" data-filter="all">全部</button>
-                    <button class="tag-btn" data-filter="careless">粗心失误</button>
-                    <button class="tag-btn" data-filter="symbol">符号错误</button>
-                    <button class="tag-btn" data-filter="concept">概念不熟</button>
-                    <button class="tag-btn" data-filter="fraction">约分错误</button>
+                    <button class="tag-btn active px-3 py-1 rounded-full text-sm border" data-filter="all">全部</button>
+                    <button class="tag-btn px-3 py-1 rounded-full text-sm border" data-filter="careless">粗心失误</button>
+                    <button class="tag-btn px-3 py-1 rounded-full text-sm border" data-filter="symbol">符号错误</button>
+                    <button class="tag-btn px-3 py-1 rounded-full text-sm border" data-filter="concept">概念不熟</button>
+                    <button class="tag-btn px-3 py-1 rounded-full text-sm border" data-filter="fraction">约分错误</button>
                 </div>
 
                 <div id="wrongBookList" class="space-y-3 max-h-[600px] overflow-y-auto">
@@ -484,13 +437,13 @@
 
         <!-- 7. 历史记录页面 -->
         <div id="historyPage" class="page">
-            <div class="card">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
                     <h2 class="text-lg font-bold">历史训练记录</h2>
                     <div class="flex gap-2">
-                        <button class="tag-btn active" data-range="all">全部</button>
-                        <button class="tag-btn" data-range="today">今日</button>
-                        <button class="tag-btn" data-range="week">本周</button>
+                        <button class="tag-btn active px-3 py-1 rounded-full text-sm border" data-range="all">全部</button>
+                        <button class="tag-btn px-3 py-1 rounded-full text-sm border" data-range="today">今日</button>
+                        <button class="tag-btn px-3 py-1 rounded-full text-sm border" data-range="week">本周</button>
                     </div>
                 </div>
                 <div id="historyList" class="space-y-3">
@@ -502,8 +455,8 @@
         <!-- 8. 工具中心 -->
         <div id="toolPage" class="page">
             <div class="grid md:grid-cols-2 gap-6">
-                <!-- 试卷生成 -->
-                <div class="card">
+                <!-- 生成试卷 -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-lg mb-4">📄 生成可打印试卷</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">一键生成A4纸质练习题，支持自定义年级、题型、题量</p>
                     <div class="space-y-3 mb-4">
@@ -526,26 +479,36 @@
                                 <option value="50">50道</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="text-sm block mb-1">题型</label>
+                            <select id="paperType" class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded px-3 py-2">
+                                <option value="all">综合混合</option>
+                                <option value="simple">简便计算专项</option>
+                                <option value="fraction">分数计算专项</option>
+                                <option value="decimal">小数计算专项</option>
+                                <option value="rational">有理数运算专项</option>
+                            </select>
+                        </div>
                     </div>
-                    <button id="generatePaperBtn" class="w-full btn-primary">生成试卷并打印</button>
+                    <button id="generatePaperBtn" class="w-full btn-primary py-2">生成试卷并打印</button>
                 </div>
 
                 <!-- 数据管理 -->
-                <div class="card">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-lg mb-4">💾 数据备份与导入</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">导出所有训练记录与错题数据，更换设备可导入恢复</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">导出所有训练记录、错题、打卡数据，更换设备可导入恢复</p>
                     <div class="space-y-3">
-                        <button id="exportDataBtn" class="w-full btn-outline">导出数据备份</button>
+                        <button id="exportDataBtn" class="w-full border border-gray-300 dark:border-gray-600 py-2 rounded-lg hover:border-primary transition-colors">导出全部数据备份</button>
                         <label class="block w-full">
-                            <span class="btn-outline w-full block text-center cursor-pointer">导入数据文件</span>
+                            <span class="border border-gray-300 dark:border-gray-600 py-2 rounded-lg block text-center cursor-pointer hover:border-primary transition-colors">导入备份文件</span>
                             <input type="file" id="importDataInput" accept=".json" class="hidden">
                         </label>
-                        <button id="exportWrongBtn" class="w-full btn-outline">导出错题表格(CSV)</button>
+                        <button id="exportWrongCSV" class="w-full border border-gray-300 dark:border-gray-600 py-2 rounded-lg hover:border-primary transition-colors">导出错题表格(CSV)</button>
                     </div>
                 </div>
 
                 <!-- 系统设置 -->
-                <div class="card md:col-span-2">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 md:col-span-2 border border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-lg mb-4">⚙️ 系统设置</h3>
                     <div class="space-y-4">
                         <div class="flex justify-between items-center">
@@ -553,8 +516,8 @@
                                 <div class="font-medium">深色护眼模式</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">长时间练习建议开启，保护视力</div>
                             </div>
-                            <button id="darkModeSwitch" class="w-12 h-6 rounded-full bg-gray-300 relative">
-                                <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all"></span>
+                            <button id="darkSwitch2" class="w-12 h-6 rounded-full bg-primary relative">
+                                <span class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full transition-all"></span>
                             </button>
                         </div>
                         <div class="flex justify-between items-center">
@@ -576,14 +539,14 @@
 
         <!-- 打印区域 -->
         <div id="printArea" class="hidden">
-            <h2 style="text-align: center; font-size: 20px; margin-bottom: 10px;">数学计算练习题</h2>
-            <p style="text-align: center; font-size: 14px; margin-bottom: 20px;">年级：______ 姓名：______ 用时：______ 得分：______</p>
-            <div id="printQuestions" style="columns: 2; column-gap: 40px; font-size: 16px; line-height: 2.2;">
-                <!-- 题目动态填充 -->
-            </div>
+            <h2 style="text-align: center; font-size: 20px; margin-bottom: 5px;">数学计算专项练习卷</h2>
+            <p style="text-align: center; font-size: 14px; margin-bottom: 20px;">
+                年级：__________ 姓名：__________ 用时：__________ 得分：__________
+            </p>
+            <div id="printQuestions" style="columns: 2; column-gap: 40px; font-size: 16px; line-height: 2.2;"></div>
             <div style="margin-top: 40px; border-top: 1px dashed #ccc; padding-top: 20px;">
                 <h3 style="font-size: 16px; margin-bottom: 10px;">参考答案</h3>
-                <div id="printAnswers" style="columns: 4; font-size: 14px; line-height: 1.8;"></div>
+                <div id="printAnswers" style="columns: 4; font-size: 13px; line-height: 1.8;"></div>
             </div>
         </div>
     </main>
@@ -594,15 +557,24 @@
 
     <script>
         // ===================== 全局变量 =====================
-        let currentUser = null;
+        const STORAGE_PREFIX = 'math_train_';
+        let currentUser = {};
+        let settings = { darkMode: false, feedback: true };
+        let records = [];
+        let wrongBook = [];
+        let checkins = [];
+        let knowledgeStats = {};
+        let medals = [];
+
         let currentConfig = {
             mode: 'count',
-            grade: null,
+            grade: 3,
             types: [],
             count: 20,
             time: 10,
             difficulty: 'auto'
         };
+
         let questionList = [];
         let userAnswers = [];
         let currentIndex = 0;
@@ -610,43 +582,39 @@
         let totalSeconds = 0;
         let isPaused = false;
         let scoreChartInstance = null;
-        let settings = {
-            darkMode: false,
-            feedback: true
-        };
 
         // 题型配置表
-        const typeConfig = {
+        const TYPE_CONFIG = {
             1: [
-                { id: 'oral', name: '口算题' },
+                { id: 'oral', name: '20以内加减法' },
                 { id: 'vertical', name: '竖式计算' }
             ],
             2: [
-                { id: 'oral', name: '口算题' },
+                { id: 'oral', name: '表内乘除法' },
                 { id: 'vertical', name: '竖式计算' },
-                { id: 'mixed', name: '脱式计算' }
+                { id: 'mixed', name: '两步混合运算' }
             ],
             3: [
-                { id: 'oral', name: '口算题' },
+                { id: 'oral', name: '多位数乘一位数' },
                 { id: 'vertical', name: '竖式计算' },
-                { id: 'simple', name: '简便计算' },
-                { id: 'fraction', name: '分数初步' }
+                { id: 'simple', name: '简便运算' },
+                { id: 'fraction', name: '分数初步计算' }
             ],
             4: [
-                { id: 'oral', name: '口算题' },
+                { id: 'oral', name: '三位数乘两位数' },
                 { id: 'vertical', name: '竖式计算' },
-                { id: 'simple', name: '简便运算' },
-                { id: 'mixed', name: '四则混合' }
+                { id: 'simple', name: '运算定律简算' },
+                { id: 'mixed', name: '四则混合运算' }
             ],
             5: [
-                { id: 'decimal', name: '小数乘除' },
-                { id: 'simple', name: '简便运算' },
-                { id: 'fraction', name: '分数加减' },
-                { id: 'equation', name: '解方程' }
+                { id: 'decimal', name: '小数乘除法' },
+                { id: 'simple', name: '小数简便运算' },
+                { id: 'fraction', name: '分数加减法' },
+                { id: 'equation', name: '简易方程' }
             ],
             6: [
-                { id: 'fraction', name: '分数乘除' },
-                { id: 'simple', name: '分数简算' },
+                { id: 'fraction', name: '分数乘除法' },
+                { id: 'simple', name: '分数简便运算' },
                 { id: 'percent', name: '百分数计算' },
                 { id: 'ratio', name: '比和比例' }
             ],
@@ -665,18 +633,18 @@
                 { id: 'quadratic', name: '一元二次方程' },
                 { id: 'function', name: '二次函数' },
                 { id: 'circle', name: '圆的计算' },
-                { id: 'trig', name: '三角函数' }
+                { id: 'trig', name: '锐角三角函数' }
             ]
         };
 
         // 勋章配置
-        const medalList = [
-            { id: 'first', name: '初次挑战', desc: '完成第一次训练', icon: '🎯' },
-            { id: 'full100', name: '满分达人', desc: '单次训练获得满分', icon: '💯' },
-            { id: 'streak3', name: '三日坚持', desc: '连续打卡3天', icon: '🔥' },
-            { id: 'streak7', name: '一周达人', desc: '连续打卡7天', icon: '🌟' },
-            { id: 'speed', name: '计算神速', desc: '单题平均用时<3秒', icon: '⚡' },
-            { id: 'hard100', name: '难题满分', desc: '提升难度获得满分', icon: '🏆' }
+        const MEDAL_CONFIG = [
+            { id: 'first', name: '初次挑战', icon: '🎯', desc: '完成第一次训练' },
+            { id: 'full100', name: '满分达人', icon: '💯', desc: '单次训练获得满分' },
+            { id: 'streak3', name: '三日坚持', icon: '🔥', desc: '连续打卡3天' },
+            { id: 'streak7', name: '一周达人', icon: '🌟', desc: '连续打卡7天' },
+            { id: 'speed', name: '计算神速', icon: '⚡', desc: '单题平均用时<3秒' },
+            { id: 'hard100', name: '难题满分', icon: '🏆', desc: '提升难度获得满分' }
         ];
 
         // ===================== 工具函数 =====================
@@ -694,15 +662,11 @@
         function gcd(a, b) {
             a = Math.abs(Math.floor(a));
             b = Math.abs(Math.floor(b));
-            while(b) {
-                let t = b;
-                b = a % b;
-                a = t;
-            }
+            while(b) { let t = b; b = a % b; a = t; }
             return a || 1;
         }
 
-        // 约分为最简分数字符串
+        // 化简分数
         function simplifyFraction(num, den) {
             if(den === 0) return '0';
             const common = gcd(num, den);
@@ -712,7 +676,7 @@
             return d === 1 ? `${n}` : `${n}/${d}`;
         }
 
-        // 解析用户答案为数值（支持分数、小数）
+        // 解析用户答案为数值
         function parseAnswer(str) {
             str = str.trim();
             if(!str) return { valid: false, value: 0 };
@@ -730,8 +694,8 @@
             return { valid: true, value: num };
         }
 
-        // 比较两个答案是否相等（允许微小误差）
-        function answerEqual(userAns, stdAns, isFraction) {
+        // 比较答案是否正确（允许微小误差）
+        function answerEqual(userAns, stdAns) {
             const user = parseAnswer(userAns);
             const std = parseAnswer(stdAns);
             if(!user.valid || !std.valid) return false;
@@ -740,51 +704,72 @@
 
         // 存储操作
         function saveStorage(key, data) {
-            localStorage.setItem(`math_${key}`, JSON.stringify(data));
+            try {
+                localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(data));
+            } catch(e) { console.error('存储失败', key, e); }
         }
-        function getStorage(key, defaultValue = null) {
-            const data = localStorage.getItem(`math_${key}`);
-            return data ? JSON.parse(data) : defaultValue;
+        function getStorage(key, defaultVal = null) {
+            try {
+                const str = localStorage.getItem(STORAGE_PREFIX + key);
+                return str ? JSON.parse(str) : defaultVal;
+            } catch(e) {
+                console.error('读取失败', key, e);
+                return defaultVal;
+            }
         }
 
         // 页面切换
         function switchPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            
             if(pageId === 'statsPage') renderStats();
             if(pageId === 'wrongPage') renderWrongBook();
             if(pageId === 'historyPage') renderHistory();
             if(pageId === 'homePage') updateHomeData();
+            window.scrollTo(0, 0);
         }
 
         // ===================== 初始化 =====================
         function init() {
-            // 加载设置
-            settings = getStorage('settings', settings);
-            applySettings();
+            // 加载数据
+            currentUser = getStorage('user', {});
+            settings = getStorage('settings', { darkMode: false, feedback: true });
+            records = getStorage('records', []);
+            wrongBook = getStorage('wrongBook', []);
+            checkins = getStorage('checkins', []);
+            knowledgeStats = getStorage('knowledge', {});
+            medals = getStorage('medals', []);
 
-            // 加载用户信息
-            currentUser = getStorage('user');
-            if(currentUser) {
-                showUserInfo();
-                initGradeDefault(currentUser.grade);
-            } else {
-                // 默认三年级
-                initGradeDefault(3);
-            }
+            // 应用深色模式
+            applyDarkMode();
+
+            // 渲染年级选项
+            renderGradeOptions();
+
+            // 绑定事件
+            bindAllEvents();
 
             // 检查未完成训练
             checkUnfinished();
 
-            // 绑定事件
-            bindEvents();
+            // 更新首页数据
+            updateHomeData();
 
-            // 渲染题型
-            renderTypeOptions(currentConfig.grade);
+            // 如果有用户信息，直接进首页
+            if(currentUser.name) {
+                showUserInfo();
+                switchPage('homePage');
+                initGradeDefault(currentUser.grade || 3);
+            }
+        }
 
-            // 检查开始按钮
-            checkStartBtn();
+        function renderGradeOptions() {
+            const container = document.getElementById('gradeSelect');
+            const grades = [1,2,3,4,5,6,7,8,9];
+            const names = ['一年级','二年级','三年级','四年级','五年级','六年级','七年级','八年级','九年级'];
+            container.innerHTML = grades.map((g, i) => 
+                `<button data-grade="${g}" class="grade-btn py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary transition-colors text-sm">${names[i]}</button>`
+            ).join('');
         }
 
         function initGradeDefault(grade) {
@@ -796,15 +781,44 @@
                 }
             });
             renderTypeOptions(grade);
+            checkStartBtn();
+        }
+
+        function renderTypeOptions(grade) {
+            const types = TYPE_CONFIG[grade] || [];
+            const container = document.getElementById('typeSelect');
+            container.innerHTML = types.map(t => 
+                `<button data-type="${t.id}" class="type-btn tag-btn active">${t.name}</button>`
+            ).join('');
+            currentConfig.types = types.map(t => t.id);
+
+            // 绑定事件
+            container.querySelectorAll('.type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const type = this.dataset.type;
+                    if(this.classList.contains('active')) {
+                        if(!currentConfig.types.includes(type)) currentConfig.types.push(type);
+                    } else {
+                        currentConfig.types = currentConfig.types.filter(t => t !== type);
+                    }
+                    checkStartBtn();
+                });
+            });
+        }
+
+        function checkStartBtn() {
+            const btn = document.getElementById('startBtn');
+            btn.disabled = !(currentConfig.grade && currentConfig.types.length > 0);
         }
 
         function showUserInfo() {
-            // 顶部不强制显示，保持免登体验
+            // 顶部不强制显示，保持简洁
         }
 
         // ===================== 事件绑定 =====================
-        function bindEvents() {
-            // 欢迎页
+        function bindAllEvents() {
+            // 欢迎页表单
             document.getElementById('welcomeForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const name = document.getElementById('userName').value.trim();
@@ -826,9 +840,8 @@
             document.querySelectorAll('.mode-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     currentConfig.mode = this.dataset.mode;
-                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
-                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-                    
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
                     if(currentConfig.mode === 'time') {
                         document.getElementById('countSetting').classList.add('hidden');
                         document.getElementById('timeSetting').classList.remove('hidden');
@@ -840,27 +853,19 @@
             });
 
             // 年级选择
-            document.querySelectorAll('.grade-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const grade = parseInt(this.dataset.grade);
-                    currentConfig.grade = grade;
-                    document.querySelectorAll('.grade-btn').forEach(b => {
-                        b.classList.remove('bg-primary', 'text-white', 'border-primary');
-                    });
-                    this.classList.add('bg-primary', 'text-white', 'border-primary');
-                    renderTypeOptions(grade);
-                    checkStartBtn();
-                });
+            document.getElementById('gradeSelect').addEventListener('click', function(e) {
+                if(e.target.classList.contains('grade-btn')) {
+                    const grade = parseInt(e.target.dataset.grade);
+                    initGradeDefault(grade);
+                }
             });
 
             // 难度选择
             document.querySelectorAll('.diff-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    currentConfig.difficulty = this.dataset.difficulty;
-                    document.querySelectorAll('.diff-btn').forEach(b => {
-                        b.classList.remove('bg-primary', 'text-white', 'border-primary');
-                    });
-                    this.classList.add('bg-primary', 'text-white', 'border-primary');
+                    currentConfig.difficulty = this.dataset.diff;
+                    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
                 });
             });
 
@@ -868,21 +873,17 @@
             document.querySelectorAll('.count-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     currentConfig.count = parseInt(this.dataset.count);
-                    document.querySelectorAll('.count-btn').forEach(b => {
-                        b.classList.remove('bg-primary', 'text-white', 'border-primary');
-                    });
-                    this.classList.add('bg-primary', 'text-white', 'border-primary');
+                    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
                 });
             });
 
-            // 时间选择
+            // 时长选择
             document.querySelectorAll('.time-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     currentConfig.time = parseInt(this.dataset.time);
-                    document.querySelectorAll('.time-btn').forEach(b => {
-                        b.classList.remove('bg-primary', 'text-white', 'border-primary');
-                    });
-                    this.classList.add('bg-primary', 'text-white', 'border-primary');
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
                 });
             });
 
@@ -890,13 +891,13 @@
             document.getElementById('startBtn').addEventListener('click', startQuiz);
 
             // 继续训练
-            document.getElementById('continueTrainBtn').addEventListener('click', continueQuiz);
+            document.getElementById('continueBtn').addEventListener('click', continueQuiz);
 
-            // 答题操作
+            // 答题按钮
             document.getElementById('prevBtn').addEventListener('click', prevQuestion);
             document.getElementById('nextBtn').addEventListener('click', nextQuestion);
             document.getElementById('submitAllBtn').addEventListener('click', function() {
-                if(confirm('确定要提前交卷吗？')) submitQuiz();
+                if(confirm('确定要提前交卷吗？未作答的题目按错误计算。')) submitQuiz();
             });
 
             // 暂停/继续
@@ -908,13 +909,13 @@
                 btn.addEventListener('click', function() {
                     const input = document.getElementById('answerInput');
                     if(input) {
-                        input.value += this.dataset.symbol;
+                        input.value += this.dataset.s;
                         input.focus();
                     }
                 });
             });
 
-            // 回车提交
+            // 回车答题
             document.addEventListener('keydown', function(e) {
                 if(e.key === 'Enter' && document.getElementById('quizPage').classList.contains('active')) {
                     if(document.activeElement.id === 'answerInput') {
@@ -932,6 +933,11 @@
                 });
             });
 
+            // 错题重做
+            document.getElementById('practiceWrongBtn').addEventListener('click', () => startWrongPractice('current'));
+            document.getElementById('allWrongBtn').addEventListener('click', () => startWrongPractice('all'));
+            document.getElementById('reviewWrongBtn').addEventListener('click', () => startWrongPractice('review'));
+
             // 历史记录筛选
             document.querySelectorAll('[data-range]').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -941,78 +947,54 @@
                 });
             });
 
-            // 重做错题
-            document.getElementById('practiceWrongBtn').addEventListener('click', function() {
-                startWrongPractice(false);
-            });
-            document.getElementById('allWrongPracticeBtn').addEventListener('click', function() {
-                startWrongPractice(true);
-            });
-            document.getElementById('reviewWrongBtn').addEventListener('click', function() {
-                startWrongPractice('review');
-            });
-
             // 工具页
             document.getElementById('generatePaperBtn').addEventListener('click', generatePrintPaper);
             document.getElementById('exportDataBtn').addEventListener('click', exportAllData);
             document.getElementById('importDataInput').addEventListener('change', importData);
-            document.getElementById('exportWrongBtn').addEventListener('click', exportWrongCSV);
-            document.getElementById('clearDataBtn').addEventListener('click', function() {
-                if(confirm('确定要清空所有数据吗？此操作不可恢复，建议先导出备份。')) {
-                    localStorage.clear();
-                    location.reload();
-                }
-            });
+            document.getElementById('exportWrongCSV').addEventListener('click', exportWrongCSV);
+            document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
 
             // 深色模式
-            document.getElementById('darkModeBtn').addEventListener('click', toggleDarkMode);
-            document.getElementById('darkModeSwitch').addEventListener('click', toggleDarkMode);
+            document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
+            document.getElementById('darkSwitch2').addEventListener('click', toggleDarkMode);
 
             // 反馈开关
             document.getElementById('feedbackSwitch').addEventListener('click', function() {
                 settings.feedback = !settings.feedback;
                 saveStorage('settings', settings);
-                applySettings();
-            });
-
-            // 设置按钮
-            document.getElementById('settingBtn').addEventListener('click', function() {
-                switchPage('toolPage');
+                updateSwitchStyle(this, settings.feedback);
             });
         }
 
-        // ===================== 题型选项渲染 =====================
-        function renderTypeOptions(grade) {
-            const types = typeConfig[grade] || [];
-            const container = document.getElementById('typeSelect');
-            container.innerHTML = types.map(t => 
-                `<button data-type="${t.id}" class="type-btn tag-btn active">${t.name}</button>`
-            ).join('');
-            
-            // 默认全选
-            currentConfig.types = types.map(t => t.id);
-
-            // 绑定事件
-            container.querySelectorAll('.type-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                    const type = this.dataset.type;
-                    if(this.classList.contains('active')) {
-                        if(!currentConfig.types.includes(type)) currentConfig.types.push(type);
-                    } else {
-                        currentConfig.types = currentConfig.types.filter(t => t !== type);
-                    }
-                    checkStartBtn();
-                });
-            });
+        // ===================== 深色模式 =====================
+        function toggleDarkMode() {
+            settings.darkMode = !settings.darkMode;
+            saveStorage('settings', settings);
+            applyDarkMode();
         }
 
-        function checkStartBtn() {
-            const btn = document.getElementById('startBtn');
-            if(currentConfig.grade && currentConfig.types.length > 0) {
-                btn.disabled = false;
+        function applyDarkMode() {
+            if (settings.darkMode) {
+                document.documentElement.classList.add('dark');
             } else {
-                btn.disabled = true;
+                document.documentElement.classList.remove('dark');
+            }
+            // 更新两个开关样式
+            updateSwitchStyle(document.getElementById('darkSwitch2'), settings.darkMode);
+            updateSwitchStyle(document.getElementById('darkSwitch'), settings.darkMode);
+        }
+
+        function updateSwitchStyle(el, isOn) {
+            if (!el) return;
+            const dot = el.querySelector('span');
+            if (isOn) {
+                el.classList.remove('bg-gray-300');
+                el.classList.add('bg-primary');
+                dot.style.transform = 'translateX(24px)';
+            } else {
+                el.classList.remove('bg-primary');
+                el.classList.add('bg-gray-300');
+                dot.style.transform = 'translateX(0)';
             }
         }
 
@@ -1021,74 +1003,55 @@
             const { grade, types, count, difficulty } = currentConfig;
             questionList = [];
 
-            // 获取知识点权重
-            const weights = getKnowledgeWeights(grade);
+            // AI自适应：根据历史正确率调整难度权重
+            let actualDiff = difficulty;
+            if (difficulty === 'auto') {
+                const gradeStats = knowledgeStats[grade] || {};
+                let totalCorrect = 0, totalCount = 0;
+                Object.values(gradeStats).forEach(s => {
+                    totalCorrect += s.correct || 0;
+                    totalCount += s.total || 0;
+                });
+                const acc = totalCount > 0 ? totalCorrect / totalCount : 0.5;
+                if (acc > 0.9) actualDiff = 'hard';
+                else if (acc < 0.7) actualDiff = 'basic';
+                else actualDiff = 'basic'; // 中间难度默认基础
+            }
 
-            for(let i = 0; i < count; i++) {
-                // 按权重选题型
-                const type = types[randomInt(0, types.length - 1)];
+            // 按知识点权重抽题
+            const typeWeights = {};
+            types.forEach(t => {
+                const stat = (knowledgeStats[grade] || {})[t] || { total: 0, correct: 0 };
+                const errRate = stat.total > 0 ? 1 - stat.correct / stat.total : 0.5;
+                typeWeights[t] = 0.3 + errRate * 0.7; // 薄弱知识点权重更高
+            });
+
+            for (let i = 0; i < count; i++) {
+                // 加权选择题型
+                const type = weightedRandom(typeWeights);
                 let q = null;
 
-                switch(type) {
-                    case 'oral':
-                        q = genOral(grade, difficulty);
-                        break
-                                        case 'vertical':
-                        q = genVertical(grade, difficulty);
-                        break;
-                    case 'simple':
-                        q = genSimple(grade, difficulty);
-                        break;
-                    case 'mixed':
-                        q = genMixed(grade, difficulty);
-                        break;
-                    case 'fraction':
-                        q = genFraction(grade, difficulty);
-                        break;
-                    case 'decimal':
-                        q = genDecimal(grade, difficulty);
-                        break;
-                    case 'equation':
-                        q = genEquation(grade, difficulty);
-                        break;
-                    case 'percent':
-                        q = genPercent(grade, difficulty);
-                        break;
-                    case 'ratio':
-                        q = genRatio(grade, difficulty);
-                        break;
-                    case 'rational':
-                        q = genRational(difficulty);
-                        break;
-                    case 'integral':
-                        q = genIntegral(difficulty);
-                        break;
-                    case 'power':
-                        q = genPower(difficulty);
-                        break;
-                    case 'multiply':
-                        q = genMultiply(difficulty);
-                        break;
-                    case 'root':
-                        q = genRoot(difficulty);
-                        break;
-                    case 'factor':
-                        q = genFactor(difficulty);
-                        break;
-                    case 'quadratic':
-                        q = genQuadratic(difficulty);
-                        break;
-                    case 'function':
-                        q = genFunction(difficulty);
-                        break;
-                    case 'circle':
-                        q = genCircle(difficulty);
-                        break;
-                    case 'trig':
-                        q = genTrig(difficulty);
-                        break;
-                    default:
-                        q = genOral(grade, difficulty);
+                switch (type) {
+                    case 'oral': q = genOral(grade, actualDiff); break;
+                    case 'vertical': q = genVertical(grade, actualDiff); break;
+                    case 'simple': q = genSimple(grade, actualDiff); break;
+                    case 'mixed': q = genMixed(grade, actualDiff); break;
+                    case 'fraction': q = genFraction(grade, actualDiff); break;
+                    case 'decimal': q = genDecimal(grade, actualDiff); break;
+                    case 'equation': q = genEquation(grade, actualDiff); break;
+                    case 'percent': q = genPercent(grade, actualDiff); break;
+                    case 'ratio': q = genRatio(grade, actualDiff); break;
+                    case 'rational': q = genRational(actualDiff); break;
+                    case 'integral': q = genIntegral(actualDiff); break;
+                    case 'power': q = genPower(actualDiff); break;
+                    case 'multiply': q = genMultiply(actualDiff); break;
+                    case 'root': q = genRoot(actualDiff); break;
+                    case 'factor': q = genFactor(actualDiff); break;
+                    case 'quadratic': q = genQuadratic(actualDiff); break;
+                    case 'function': q = genFunction(actualDiff); break;
+                    case 'circle': q = genCircle(actualDiff); break;
+                    case 'trig': q = genTrig(actualDiff); break;
+                    default: q = genOral(grade, actualDiff);
                 }
                 questionList.push(q);
             }
@@ -1097,16 +1060,27 @@
             currentIndex = 0;
         }
 
-        // ========== 各题型生成函数 ==========
-        // 口算题（全年级基础）
-        function genOral(grade, difficulty) {
-            let a, b, op, answer, text, knowledge;
-            const hard = difficulty === 'hard';
+        // 加权随机
+        function weightedRandom(weights) {
+            const entries = Object.entries(weights);
+            const total = entries.reduce((sum, [, w]) => sum + w, 0);
+            let rand = Math.random() * total;
+            for (const [key, w] of entries) {
+                rand -= w;
+                if (rand <= 0) return key;
+            }
+            return entries[0][0];
+        }
 
-            switch(grade) {
+        // ========== 各题型生成函数 ==========
+        function genOral(grade, diff) {
+            let a, b, op, answer, text, knowledge, analysis;
+            const hard = diff === 'hard';
+
+            switch (grade) {
                 case 1:
                     op = Math.random() > 0.5 ? '+' : '-';
-                    if(op === '+') {
+                    if (op === '+') {
                         a = randomInt(5, 9); b = randomInt(5, 9);
                         answer = a + b; knowledge = '20以内进位加法';
                     } else {
@@ -1114,111 +1088,115 @@
                         answer = a - b; knowledge = '20以内退位减法';
                     }
                     text = `${a} ${op} ${b} = `;
+                    analysis = `按照${op === '+' ? '加法' : '减法'}运算法则计算，结果为 ${answer}`;
                     break;
 
                 case 2:
                     const t = randomInt(1, 3);
-                    if(t === 1) {
+                    if (t === 1) {
                         a = randomInt(2, 9); b = randomInt(2, 9);
                         answer = a * b; knowledge = '表内乘法';
                         text = `${a} × ${b} = `;
-                    } else if(t === 2) {
+                        analysis = `根据乘法口诀，${a}乘${b}等于 ${answer}`;
+                    } else if (t === 2) {
                         b = randomInt(2, 9); answer = randomInt(2, 9);
                         a = b * answer; knowledge = '表内除法';
                         text = `${a} ÷ ${b} = `;
+                        analysis = `根据乘法口诀反推，${a}除以${b}等于 ${answer}`;
                     } else {
                         op = Math.random() > 0.5 ? '+' : '-';
                         a = randomInt(20, 80); b = randomInt(15, 50);
                         answer = op === '+' ? a + b : a - b;
-                        knowledge = '100以内加减';
+                        knowledge = '100以内加减法';
                         text = `${a} ${op} ${b} = `;
+                        analysis = `对齐数位计算，结果为 ${answer}`;
                     }
                     break;
 
                 case 3:
                     const t3 = randomInt(1, 3);
-                    if(t3 === 1) {
-                        a = randomInt(100, 999); b = randomInt(2, 9);
+                    if (t3 === 1) {
+                        a = randomInt(12, hard ? 999 : 199); b = randomInt(2, 9);
                         answer = a * b; knowledge = '多位数乘一位数';
                         text = `${a} × ${b} = `;
-                    } else if(t3 === 2) {
-                        b = randomInt(2, 9); answer = randomInt(11, 99);
-                        a = b * answer; knowledge = '除数是一位数除法';
+                        analysis = `从个位起依次相乘，结果为 ${answer}`;
+                    } else if (t3 === 2) {
+                        b = randomInt(2, 9); answer = randomInt(11, hard ? 99 : 50);
+                        a = b * answer; knowledge = '除数是一位数的除法';
                         text = `${a} ÷ ${b} = `;
+                        analysis = `从高位除起，商为 ${answer}`;
                     } else {
                         a = randomInt(200, 900); b = randomInt(100, 600);
                         answer = a + b; knowledge = '万以内加减法';
                         text = `${a} + ${b} = `;
+                        analysis = `对齐数位相加，结果为 ${answer}`;
                     }
                     break;
 
                 case 4:
-                    const t4 = randomInt(1, 2);
-                    if(t4 === 1) {
+                    if (Math.random() > 0.5) {
                         a = randomInt(100, 300); b = randomInt(12, hard ? 89 : 30);
                         answer = a * b; knowledge = '三位数乘两位数';
                         text = `${a} × ${b} = `;
                     } else {
                         b = randomInt(12, hard ? 89 : 30); answer = randomInt(5, 30);
-                        a = b * answer; knowledge = '除数是两位数除法';
+                        a = b * answer; knowledge = '除数是两位数的除法';
                         text = `${a} ÷ ${b} = `;
                     }
+                    analysis = `按竖式计算法则计算，结果为 ${answer}`;
                     break;
 
                 default:
                     a = randomInt(10, 50); b = randomInt(5, 30);
                     answer = a + b; text = `${a} + ${b} = `;
-                    knowledge = '基础口算';
+                    knowledge = '基础口算'; analysis = `计算得 ${answer}`;
             }
-            return { text, answer, type: 'oral', isFraction: false, knowledge, analysis: `按照运算法则直接计算，结果为 ${answer}` };
+            return { text, answer, type: 'oral', isFraction: false, knowledge, analysis, errorType: '粗心计算失误' };
         }
 
-        // 竖式计算
-        function genVertical(grade, difficulty) {
-            let a, b, op, answer, text, knowledge;
-            const hard = difficulty === 'hard';
+        function genVertical(grade, diff) {
+            let a, b, op, answer, text, knowledge, analysis;
+            const hard = diff === 'hard';
 
-            switch(grade) {
+            switch (grade) {
                 case 2:
                     op = Math.random() > 0.5 ? '+' : '-';
                     a = randomInt(100, 999); b = randomInt(100, 999);
-                    if(op === '+') { answer = a + b; knowledge = '三位数加法竖式'; }
-                    else { if(a < b)[a, b] = [b, a]; answer = a - b; knowledge = '三位数减法竖式'; }
+                    if (op === '+') answer = a + b;
+                    else { if (a < b)[a, b] = [b, a]; answer = a - b; }
                     text = `${a} ${op} ${b} = `;
+                    knowledge = '三位数加减法竖式';
                     break;
-
                 case 3:
                     a = randomInt(100, 999); b = randomInt(2, 9);
-                    answer = a * b; knowledge = '多位数乘一位数竖式';
-                    text = `${a} × ${b} = `;
+                    answer = a * b; text = `${a} × ${b} = `;
+                    knowledge = '多位数乘一位数竖式';
                     break;
-
                 case 4:
                     a = randomInt(100, 400); b = randomInt(12, hard ? 99 : 50);
-                    answer = a * b; knowledge = '三位数乘两位数竖式';
-                    text = `${a} × ${b} = `;
+                    answer = a * b; text = `${a} × ${b} = `;
+                    knowledge = '三位数乘两位数竖式';
                     break;
-
                 case 5:
                     a = randomInt(10, 99) / 10; b = randomInt(10, 99) / 10;
-                    answer = Math.round((a + b) * 100) / 100; knowledge = '小数加减法竖式';
+                    answer = Math.round((a + b) * 100) / 100;
                     text = `${a} + ${b} = `;
+                    knowledge = '小数加减法竖式';
                     break;
-
                 default:
                     a = randomInt(100, 500); b = randomInt(100, 500);
                     answer = a + b; text = `${a} + ${b} = `;
                     knowledge = '整数加减竖式';
             }
-            return { text, answer, type: 'vertical', isFraction: false, knowledge, analysis: `列竖式对齐数位，按运算法则计算，结果为 ${answer}` };
+            analysis = `列竖式对齐数位，按运算法则计算，结果为 ${answer}`;
+            return { text, answer, type: 'vertical', isFraction: false, knowledge, analysis, errorType: '粗心计算失误' };
         }
 
-        // 简便计算
-        function genSimple(grade, difficulty) {
-            let text, answer, knowledge;
-            const hard = difficulty === 'hard';
+        function genSimple(grade, diff) {
+            let text, answer, knowledge, analysis;
+            const hard = diff === 'hard';
 
-            switch(grade) {
+            switch (grade) {
                 case 3:
                     const a = randomInt(10, 89);
                     const b = 100 - a - randomInt(1, 9);
@@ -1226,23 +1204,26 @@
                     answer = a + b + c;
                     text = `${a} + ${c} + ${b} = `;
                     knowledge = '加法凑整简算';
+                    analysis = `利用加法交换律，先算${a}+${b}=${a+b}，再加${c}，结果为${answer}`;
                     break;
 
                 case 4:
                     const t = randomInt(1, 3);
-                    if(t === 1) {
+                    if (t === 1) {
                         const a3 = randomInt(10, 99);
                         const b3 = randomInt(2, 9);
                         const c3 = randomInt(2, 9);
                         answer = a3 * (b3 + c3);
                         text = `${a3} × ${b3} + ${a3} × ${c3} = `;
                         knowledge = '乘法分配律';
-                    } else if(t === 2) {
+                        analysis = `运用乘法分配律，${a3}×(${b3}+${c3}) = ${answer}`;
+                    } else if (t === 2) {
                         answer = randomInt(2, 9) * 100;
                         const b2 = [25, 125][randomInt(0, 1)];
                         const a2 = answer / b2;
                         text = `${a2} × ${b2} × 4 = `;
                         knowledge = '乘法结合律凑整';
+                        analysis = `利用乘法结合律，先算${b2}×4=${b2*4}，再乘${a2}得${answer}`;
                     } else {
                         const total = randomInt(200, 800);
                         const a4 = randomInt(30, 90);
@@ -1250,6 +1231,7 @@
                         answer = total - a4 - b4;
                         text = `${total} - ${a4} - ${b4} = `;
                         knowledge = '连减性质';
+                        analysis = `利用连减性质，${total}-(${a4}+${b4}) = ${answer}`;
                     }
                     break;
 
@@ -1260,6 +1242,7 @@
                     answer = Math.round(a5 * (b5 + c5) * 100) / 100;
                     text = `${a5} × ${b5} + ${a5} × ${c5} = `;
                     knowledge = '小数乘法分配律';
+                    analysis = `运用乘法分配律提取公因数${a5}，计算得${answer}`;
                     break;
 
                 case 6:
@@ -1270,6 +1253,7 @@
                     answer = simplifyFraction(num * (a6 + b6), den);
                     text = `${num}/${den} × ${a6} + ${num}/${den} × ${b6} = `;
                     knowledge = '分数乘法分配律';
+                    analysis = `提取公因数${num}/${den}，计算得${answer}`;
                     break;
 
                 case 7:
@@ -1278,97 +1262,98 @@
                     answer = c7;
                     text = `${a7} + ${c7} + (-${a7}) = `;
                     knowledge = '相反数结合简算';
+                    analysis = `互为相反数的两数相加得0，结果为${answer}`;
                     break;
 
                 default:
-                    answer = 100;
-                    text = '36 + 64 = ';
-                    knowledge = '凑整计算';
+                    answer = 100; text = '36 + 64 = ';
+                    knowledge = '凑整计算'; analysis = '直接相加得100';
             }
             const isFrac = grade >= 6;
-            return { text, answer, type: 'simple', isFraction: isFrac, knowledge, analysis: `观察数字特点，运用运算定律凑整简化计算，结果为 ${answer}` };
+            return { text, answer, type: 'simple', isFraction: isFrac, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 四则混合运算
-        function genMixed(grade, difficulty) {
-            let a, b, c, answer, text, knowledge;
+        function genMixed(grade, diff) {
+            let a, b, c, answer, text, knowledge, analysis;
 
-            switch(grade) {
+            switch (grade) {
                 case 2:
                     a = randomInt(2, 9); b = randomInt(2, 9); c = randomInt(1, 20);
                     answer = a * b + c;
                     text = `${a} × ${b} + ${c} = `;
                     knowledge = '乘加两步混合';
                     break;
-
                 case 4:
                     a = randomInt(10, 50); b = randomInt(2, 9); c = randomInt(10, 30);
                     answer = a + b * c;
                     text = `${a} + ${b} × ${c} = `;
                     knowledge = '四则混合运算（无括号）';
                     break;
-
                 case 5:
                     a = randomInt(10, 30) / 10; b = randomInt(2, 5); c = randomInt(5, 20) / 10;
                     answer = Math.round((a * b + c) * 100) / 100;
                     text = `${a} × ${b} + ${c} = `;
                     knowledge = '小数四则混合';
                     break;
-
                 default:
-                    a = 10; b = 2; c = 5; answer = 20;
-                    text = '10 × 2 + 5 = ';
+                    answer = 20; text = '10 × 2 + 5 = ';
                     knowledge = '混合运算';
             }
-            return { text, answer, type: 'mixed', isFraction: false, knowledge, analysis: `先算乘除后算加减，分步计算结果为 ${answer}` };
+            analysis = `先算乘除后算加减，分步计算结果为 ${answer}`;
+            return { text, answer, type: 'mixed', isFraction: false, knowledge, analysis, errorType: '运算顺序错误' };
         }
 
-        // 分数计算
-        function genFraction(grade, difficulty) {
-            let text, answer, knowledge;
-            const hard = difficulty === 'hard';
+        function genFraction(grade, diff) {
+            let text, answer, knowledge, analysis;
+            const hard = diff === 'hard';
 
-            if(grade === 3) {
+            if (grade === 3) {
                 const den = randomInt(3, 9);
-                const num1 = randomInt(1, den-1);
-                const num2 = randomInt(1, den-num1);
+                const num1 = randomInt(1, den - 1);
+                const num2 = randomInt(1, den - num1);
                 answer = simplifyFraction(num1 + num2, den);
                 text = `${num1}/${den} + ${num2}/${den} = `;
                 knowledge = '同分母分数加法';
-            } else if(grade === 5) {
+                analysis = '同分母分数相加，分母不变分子相加，约分后得 ' + answer;
+            } else if (grade === 5) {
                 const den1 = randomInt(2, 6);
                 const den2 = randomInt(2, 6);
-                const num1 = randomInt(1, den1-1);
-                const num2 = randomInt(1, den2-1);
+                const num1 = randomInt(1, den1 - 1);
+                const num2 = randomInt(1, den2 - 1);
                 const common = den1 * den2;
                 answer = simplifyFraction(num1 * den2 + num2 * den1, common);
                 text = `${num1}/${den1} + ${num2}/${den2} = `;
                 knowledge = '异分母分数加减法';
-            } else if(grade === 6) {
-                if(Math.random() > 0.5) {
+                analysis = '先通分再计算，约分得 ' + answer;
+            } else if (grade === 6) {
+                if (Math.random() > 0.5) {
                     const n1 = randomInt(1, 9), d1 = randomInt(2, 10);
                     const n2 = randomInt(1, 9), d2 = randomInt(2, 10);
                     answer = simplifyFraction(n1 * n2, d1 * d2);
                     text = `${n1}/${d1} × ${n2}/${d2} = `;
                     knowledge = '分数乘法';
+                    analysis = '分子乘分子，分母乘分母，约分得 ' + answer;
                 } else {
                     const n1 = randomInt(1, 8), d1 = randomInt(2, 9);
                     const n2 = randomInt(1, 8), d2 = randomInt(2, 9);
                     answer = simplifyFraction(n1 * d2, d1 * n2);
                     text = `${n1}/${d1} ÷ ${n2}/${d2} = `;
                     knowledge = '分数除法';
+                    analysis = '除以一个数等于乘它的倒数，约分得 ' + answer;
                 }
+            } else {
+                answer = '1/2'; text = '1/4 + 1/4 = ';
+                knowledge = '分数计算'; analysis = '计算得 1/2';
             }
-            return { text, answer, type: 'fraction', isFraction: true, knowledge, analysis: `先通分/约分再计算，最终结果要约成最简分数，结果为 ${answer}` };
+            return { text, answer, type: 'fraction', isFraction: true, knowledge, analysis, errorType: '约分失误' };
         }
 
-        // 小数乘除
-        function genDecimal(grade, difficulty) {
-            let a, b, answer, text, knowledge;
-            const hard = difficulty === 'hard';
+        function genDecimal(grade, diff) {
+            let a, b, answer, text, knowledge, analysis;
+            const hard = diff === 'hard';
 
-            if(Math.random() > 0.5) {
-                a = randomInt(12, 99) / 10; b = randomInt(2, 9);
+            if (Math.random() > 0.5) {
+                a = randomInt(12, hard ? 999 : 99) / 10; b = randomInt(2, 9);
                 answer = Math.round(a * b * 100) / 100;
                 knowledge = '小数乘法';
                 text = `${a} × ${b} = `;
@@ -1379,47 +1364,45 @@
                 knowledge = '小数除法';
                 text = `${a} ÷ ${b} = `;
             }
-            return { text, answer, type: 'decimal', isFraction: false, knowledge, analysis: `按整数乘除计算后点对小数点，结果为 ${answer}` };
+            analysis = `按整数乘除计算后点对小数点，结果为 ${answer}`;
+            return { text, answer, type: 'decimal', isFraction: false, knowledge, analysis, errorType: '粗心计算失误' };
         }
 
-        // 解方程
-        function genEquation(grade, difficulty) {
-            let a, b, answer, text, knowledge;
+        function genEquation(grade, diff) {
+            let a, b, answer, text, knowledge, analysis;
 
-            if(grade === 5) {
+            if (grade === 5) {
                 a = randomInt(5, 30); b = randomInt(10, 50);
                 answer = b - a;
                 text = `x + ${a} = ${b} ，x = `;
                 knowledge = '简易方程';
-            } else if(grade === 7) {
+            } else if (grade === 7) {
                 a = randomInt(2, 9); b = randomInt(10, 50);
                 answer = b / a;
                 text = `${a}x = ${b} ，x = `;
                 knowledge = '一元一次方程';
             } else {
-                answer = 10;
-                text = 'x + 5 = 15 ，x = ';
+                answer = 5; text = 'x + 3 = 8 ，x = ';
                 knowledge = '基础方程';
             }
-            return { text, answer, type: 'equation', isFraction: false, knowledge, analysis: `根据等式性质移项计算，解得 x = ${answer}` };
+            analysis = `根据等式性质移项计算，解得 x = ${answer}`;
+            return { text, answer, type: 'equation', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 百分数计算
-        function genPercent(grade, difficulty) {
-            let a, pct, answer, text, knowledge;
+        function genPercent(grade, diff) {
+            let a, pct, answer, text, knowledge, analysis;
 
             a = randomInt(50, 200);
             pct = randomInt(10, 90);
             answer = a * pct / 100;
             text = `${a} 的 ${pct}% = `;
             knowledge = '百分数基础计算';
-
-            return { text, answer, type: 'percent', isFraction: false, knowledge, analysis: `将百分数转化为小数相乘，结果为 ${answer}` };
+            analysis = `将百分数转化为小数相乘，结果为 ${answer}`;
+            return { text, answer, type: 'percent', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 比和比例
-        function genRatio(grade, difficulty) {
-            let a, scale, b, answer, text, knowledge;
+        function genRatio(grade, diff) {
+            let a, scale, b, answer, text, knowledge, analysis;
 
             a = randomInt(2, 20);
             scale = randomInt(2, 5);
@@ -1427,128 +1410,132 @@
             answer = scale;
             text = `${b} : ${a} 化简后比值 = `;
             knowledge = '比的化简';
-
-            return { text, answer, type: 'ratio', isFraction: false, knowledge, analysis: `前后项同时除以最大公因数，比值为 ${answer}` };
+            analysis = `前后项同时除以最大公因数${a}，比值为 ${answer}`;
+            return { text, answer, type: 'ratio', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 有理数运算（七年级）
-        function genRational(difficulty) {
-            let a, b, op, answer, text, knowledge;
+        function genRational(diff) {
+            let a, b, op, answer, text, knowledge, analysis;
+            const hard = diff === 'hard';
 
-            const t = randomInt(1, 3);
-            if(t === 1) {
+            const t = randomInt(1, hard ? 4 : 3);
+            if (t === 1) {
                 a = randomInt(-30, 30); b = randomInt(-20, 20);
                 answer = a + b; knowledge = '有理数加法';
                 text = `${a} + (${b}) = `;
-            } else if(t === 2) {
+            } else if (t === 2) {
                 a = randomInt(-15, 15); b = randomInt(-10, 10);
-                if(b === 0) b = 2;
+                if (b === 0) b = 2;
                 answer = a * b; knowledge = '有理数乘法';
                 text = `${a} × (${b}) = `;
-            } else {
+            } else if (t === 3) {
                 a = randomInt(2, 6);
                 answer = a * a; knowledge = '有理数乘方';
                 text = `${a}² = `;
+            } else {
+                a = randomInt(-10, 10); b = randomInt(2, 5);
+                const c = randomInt(-10, 10);
+                answer = a + b * c; knowledge = '有理数混合运算';
+                text = `${a} + ${b} × (${c}) = `;
             }
-            return { text, answer, type: 'rational', isFraction: false, knowledge, analysis: `注意符号法则，同号得正异号得负，结果为 ${answer}` };
+            analysis = `注意符号法则，同号得正异号得负，结果为 ${answer}`;
+            return { text, answer, type: 'rational', isFraction: false, knowledge, analysis, errorType: '符号错误' };
         }
 
-        // 整式加减
-        function genIntegral(difficulty) {
-            let a, b, answer, text, knowledge;
+        function genIntegral(diff) {
+            let a, b, answer, text, knowledge, analysis;
 
             a = randomInt(2, 9); b = randomInt(1, 7);
             answer = a + b;
             text = `${a}x + ${b}x = ___x`;
             knowledge = '合并同类项';
-
-            return { text, answer, type: 'integral', isFraction: false, knowledge, analysis: `系数相加，字母部分不变，结果为 ${answer}x` };
+            analysis = '系数相加，字母部分不变，结果为 ' + answer + 'x';
+            return { text, answer, type: 'integral', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 幂的运算
-        function genPower(difficulty) {
-            let a, b, c, answer, text, knowledge;
+        function genPower(diff) {
+            let a, b, c, answer, text, knowledge, analysis;
+            const hard = diff === 'hard';
 
-            const t = randomInt(1, 2);
-            if(t === 1) {
+            const t = randomInt(1, hard ? 3 : 2);
+            if (t === 1) {
                 b = randomInt(2, 5); c = randomInt(2, 4);
                 answer = b + c; knowledge = '同底数幂相乘';
                 text = `a^${b} · a^${c} = a^___`;
-            } else {
+            } else if (t === 2) {
                 b = randomInt(2, 4); c = randomInt(2, 3);
                 answer = b * c; knowledge = '幂的乘方';
                 text = `(a^${b})^${c} = a^___`;
+            } else {
+                b = randomInt(2, 5); c = randomInt(2, 5);
+                answer = b * c; knowledge = '积的乘方';
+                text = `(ab)^${b} = a^___ · b^${b}`;
             }
-            return { text, answer, type: 'power', isFraction: false, knowledge, analysis: `根据幂的运算法则，指数相加/相乘，结果为 a^${answer}` };
+            analysis = '根据幂的运算法则计算，指数相加/相乘';
+            return { text, answer, type: 'power', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 整式乘法
-        function genMultiply(difficulty) {
-            let a, answer, text, knowledge;
+        function genMultiply(diff) {
+            let a, answer, text, knowledge, analysis;
 
             a = randomInt(2, 9);
             answer = a * a;
             text = `(a + ${a})(a - ${a}) = a² - ___`;
             knowledge = '平方差公式';
-
-            return { text, answer, type: 'multiply', isFraction: false, knowledge, analysis: `应用平方差公式，结果为 a² - ${answer}` };
+            analysis = '应用平方差公式，结果为 a² - ' + answer;
+            return { text, answer, type: 'multiply', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 二次根式
-        function genRoot(difficulty) {
-            let n, answer, text, knowledge;
+        function genRoot(diff) {
+            let n, answer, text, knowledge, analysis;
 
             n = randomInt(2, 10);
             answer = n;
-            text = `√${n*n} = `;
+            text = `√${n * n} = `;
             knowledge = '二次根式化简';
-
-            return { text, answer, type: 'root', isFraction: false, knowledge, analysis: `开平方后非负，结果为 ${answer}` };
+            analysis = '开平方后非负，结果为 ' + answer;
+            return { text, answer, type: 'root', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 因式分解
-        function genFactor(difficulty) {
-            let a, b, answer, text, knowledge;
+        function genFactor(diff) {
+            let a, b, answer, text, knowledge, analysis;
 
             a = randomInt(2, 9); b = randomInt(2, 9);
             answer = a + b;
-            text = `x² + ${a+b}x + ${a*b} = (x+${a})(x+___)`;
+            text = `x² + ${a + b}x + ${a * b} = (x + ${a})(x + ___)`;
             knowledge = '十字相乘法因式分解';
-
-            return { text, answer, type: 'factor', isFraction: false, knowledge, analysis: `常数项拆分为两数相乘，和为一次项系数，括号内填 ${answer}` };
+            analysis = '常数项拆分为两数相乘，和为一次项系数，括号内填 ' + answer;
+            return { text, answer, type: 'factor', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 一元二次方程
-        function genQuadratic(difficulty) {
-            let r1, r2, b, c, answer, text, knowledge;
+        function genQuadratic(diff) {
+            let r1, r2, b, c, answer, text, knowledge, analysis;
 
             r1 = randomInt(1, 5); r2 = randomInt(1, 5);
             b = -(r1 + r2); c = r1 * r2;
             answer = Math.max(r1, r2);
             text = `x² + ${b}x + ${c} = 0 的正根 = `;
             knowledge = '一元二次方程求根';
-
-            return { text, answer, type: 'quadratic', isFraction: false, knowledge, analysis: `因式分解或用求根公式，正根为 ${answer}` };
+            analysis = '因式分解或用求根公式，正根为 ' + answer;
+            return { text, answer, type: 'quadratic', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 二次函数
-        function genFunction(difficulty) {
-            let a, h, k, answer, text, knowledge;
+        function genFunction(diff) {
+            let a, h, k, answer, text, knowledge, analysis;
 
             a = randomInt(1, 4); h = randomInt(1, 5); k = randomInt(1, 10);
             answer = h;
-            text = `y = ${a}(x-${h})² + ${k} 的顶点横坐标 = `;
+            text = `y = ${a}(x - ${h})² + ${k} 的顶点横坐标 = `;
             knowledge = '二次函数顶点式';
-
-            return { text, answer, type: 'function', isFraction: false, knowledge, analysis: `顶点式 y=a(x-h)²+k 的顶点横坐标为 h，即 ${answer}` };
+            analysis = '顶点式 y=a(x-h)²+k 的顶点横坐标为 h，即 ' + answer;
+            return { text, answer, type: 'function', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 圆的计算
-        function genCircle(difficulty) {
-            let r, answer, text, knowledge;
+        function genCircle(diff) {
+            let r, answer, text, knowledge, analysis;
 
             r = randomInt(3, 10);
-            if(Math.random() > 0.5) {
+            if (Math.random() > 0.5) {
                 answer = 2 * 3.14 * r;
                 text = `半径${r}的圆，周长 = ___（π取3.14）`;
                 knowledge = '圆的周长';
@@ -1557,46 +1544,23 @@
                 text = `半径${r}的圆，面积 = ___（π取3.14）`;
                 knowledge = '圆的面积';
             }
-            return { text, answer, type: 'circle', isFraction: false, knowledge, analysis: `代入对应公式计算，结果为 ${answer}` };
+            analysis = '代入对应公式计算，结果为 ' + answer;
+            return { text, answer, type: 'circle', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // 三角函数
-        function genTrig(difficulty) {
-            let ang, answer, text, knowledge;
+        function genTrig(diff) {
+            let ang, answer, text, knowledge, analysis;
             const angles = [30, 45, 60];
             ang = angles[randomInt(0, 2)];
-            const vals = {30: 0.5, 45: Math.SQRT2/2, 60: Math.SQRT3/2};
-            answer = vals[ang];
+            const sinVals = { 30: 0.5, 45: Math.SQRT2 / 2, 60: Math.SQRT3 / 2 };
+            answer = sinVals[ang];
             text = `sin${ang}° = `;
             knowledge = '特殊角三角函数值';
-
-            return { text, answer, type: 'trig', isFraction: false, knowledge, analysis: `特殊角三角函数值需熟记，sin${ang}° = ${answer}` };
+            analysis = `熟记特殊角三角函数值，sin${ang}° = ${answer}`;
+            return { text, answer, type: 'trig', isFraction: false, knowledge, analysis, errorType: '公式概念不熟' };
         }
 
-        // ========== 自适应难度与知识点权重 ==========
-        function getKnowledgeWeights(grade) {
-            const stats = getStorage('knowledge_stats', {});
-            const gradeStats = stats[grade] || {};
-            const weights = {};
-            
-            Object.keys(gradeStats).forEach(k => {
-                const s = gradeStats[k];
-                const acc = s.total > 0 ? s.correct / s.total : 0.5;
-                weights[k] = Math.max(0.1, 1 - acc);
-            });
-            return weights;
-        }
-
-        function updateKnowledgeStats(grade, knowledge, isCorrect) {
-            const stats = getStorage('knowledge_stats', {});
-            if(!stats[grade]) stats[grade] = {};
-            if(!stats[grade][knowledge]) stats[grade][knowledge] = { total: 0, correct: 0 };
-            stats[grade][knowledge].total++;
-            if(isCorrect) stats[grade][knowledge].correct++;
-            saveStorage('knowledge_stats', stats);
-        }
-
-        // ========== 答题流程控制 ==========
+        // ===================== 答题流程控制 =====================
         function startQuiz() {
             generateQuestions();
             switchPage('quizPage');
@@ -1605,9 +1569,16 @@
             document.getElementById('answerInput')?.focus();
         }
 
+        function checkUnfinished() {
+            const saved = getStorage('unfinished_quiz');
+            if (saved && saved.questions && saved.questions.length > 0) {
+                document.getElementById('continueBox').classList.remove('hidden');
+            }
+        }
+
         function continueQuiz() {
             const saved = getStorage('unfinished_quiz');
-            if(!saved) return startQuiz();
+            if (!saved) return startQuiz();
             questionList = saved.questions;
             userAnswers = saved.answers;
             currentIndex = saved.index;
@@ -1618,32 +1589,13 @@
             renderQuestion();
         }
 
-        function checkUnfinished() {
-            const saved = getStorage('unfinished_quiz');
-            if(saved && saved.questions && saved.questions.length > 0) {
-                document.getElementById('continueTrainBox').classList.remove('hidden');
-            }
-        }
-
-        function saveUnfinished() {
-            if(questionList.length === 0) return;
-            saveStorage('unfinished_quiz', {
-                questions: questionList,
-                answers: userAnswers,
-                index: currentIndex,
-                seconds: totalSeconds,
-                config: currentConfig,
-                time: Date.now()
-            });
-        }
-
         function renderQuestion() {
             const q = questionList[currentIndex];
             document.getElementById('questionText').textContent = q.text;
             document.getElementById('quizProgress').textContent = `第 ${currentIndex + 1} / ${questionList.length} 题`;
-            
+
             const typeMap = {
-                oral: '口算题', vertical: '竖式计算', simple: '简便计算',
+                oral: '口算题', vertical: '竖式计算', simple: '简便运算',
                 mixed: '混合运算', fraction: '分数计算', decimal: '小数计算',
                 equation: '解方程', percent: '百分数', ratio: '比和比例',
                 rational: '有理数', integral: '整式运算', power: '幂的运算',
@@ -1653,14 +1605,20 @@
             document.getElementById('quizType').textContent = typeMap[q.type] || '计算题';
 
             const container = document.getElementById('answerContainer');
-            container.innerHTML = `<input type="text" id="answerInput" class="w-full text-center text-xl py-3 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg input-focus" placeholder="请输入答案（分数用/分隔）" autocomplete="off" value="${userAnswers[currentIndex] || ''}">`;
-            
+            container.innerHTML = `<input type="text" id="answerInput" autocomplete="off"
+                class="w-full text-center text-xl py-3 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="请输入答案（分数用/分隔）" value="${userAnswers[currentIndex] || ''}">`;
+
             document.getElementById('answerInput').addEventListener('keydown', e => {
-                if(e.key === 'Enter') nextQuestion();
+                if (e.key === 'Enter') nextQuestion();
             });
             document.getElementById('answerInput').focus();
             document.getElementById('feedbackTip').textContent = '';
             document.getElementById('feedbackTip').className = 'mt-4 h-6 text-sm font-medium';
+
+            // 按钮状态
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').textContent = currentIndex === questionList.length - 1 ? '完成' : '下一题';
         }
 
         function getCurrentAnswer() {
@@ -1669,7 +1627,7 @@
 
         function prevQuestion() {
             userAnswers[currentIndex] = getCurrentAnswer();
-            if(currentIndex > 0) {
+            if (currentIndex > 0) {
                 currentIndex--;
                 renderQuestion();
             }
@@ -1677,12 +1635,13 @@
 
         function nextQuestion() {
             userAnswers[currentIndex] = getCurrentAnswer();
-            
-            if(settings.feedback) {
+
+            // 即时反馈
+            if (settings.feedback) {
                 const q = questionList[currentIndex];
-                const correct = answerEqual(userAnswers[currentIndex], q.answer, q.isFraction);
+                const correct = answerEqual(userAnswers[currentIndex], q.answer);
                 const tip = document.getElementById('feedbackTip');
-                if(correct) {
+                if (correct) {
                     tip.textContent = '✓ 回答正确';
                     tip.className = 'mt-4 h-6 text-sm font-medium text-green-600';
                 } else {
@@ -1692,7 +1651,7 @@
             }
 
             setTimeout(() => {
-                if(currentIndex < questionList.length - 1) {
+                if (currentIndex < questionList.length - 1) {
                     currentIndex++;
                     renderQuestion();
                 } else {
@@ -1701,8 +1660,9 @@
             }, settings.feedback ? 400 : 0);
         }
 
+        // 计时器
         function startTimer(resume = false) {
-            if(!resume) totalSeconds = 0;
+            if (!resume) totalSeconds = 0;
             document.getElementById('timer').textContent = formatTime(totalSeconds);
             timerInterval = setInterval(() => {
                 totalSeconds++;
@@ -1714,6 +1674,7 @@
             clearInterval(timerInterval);
         }
 
+        // 暂停
         function pauseQuiz() {
             stopTimer();
             saveUnfinished();
@@ -1725,7 +1686,18 @@
             startTimer(true);
         }
 
-        // ========== 提交批改 ==========
+        function saveUnfinished() {
+            saveStorage('unfinished_quiz', {
+                questions: questionList,
+                answers: userAnswers,
+                index: currentIndex,
+                seconds: totalSeconds,
+                config: currentConfig,
+                time: Date.now()
+            });
+        }
+
+        // ===================== 交卷批改 =====================
         function submitQuiz() {
             stopTimer();
             localStorage.removeItem('math_unfinished_quiz');
@@ -1735,9 +1707,8 @@
 
             questionList.forEach((q, index) => {
                 const userAns = userAnswers[index];
-                const isCorrect = answerEqual(userAns, q.answer, q.isFraction);
-                
-                if(isCorrect) {
+                const isCorrect = answerEqual(userAns, q.answer);
+                if (isCorrect) {
                     correctCount++;
                 } else {
                     wrongList.push({
@@ -1746,9 +1717,11 @@
                         correctAnswer: q.answer,
                         knowledge: q.knowledge,
                         analysis: q.analysis,
-                        type: q.type
+                        type: q.type,
+                        errorType: q.errorType
                     });
                 }
+                // 更新知识点统计
                 updateKnowledgeStats(currentConfig.grade, q.knowledge, isCorrect);
             });
 
@@ -1756,6 +1729,7 @@
             const accuracy = `${Math.round(correctCount / questionList.length * 100)}%`;
             const avgTime = (totalSeconds / questionList.length).toFixed(1);
 
+            // 保存记录
             const record = {
                 id: Date.now(),
                 time: new Date().toLocaleString(),
@@ -1767,29 +1741,40 @@
                 avgTime,
                 wrongCount: wrongList.length
             };
-
             const records = getStorage('records', []);
             records.unshift(record);
             saveStorage('records', records);
 
-            if(wrongList.length > 0) {
+            // 保存错题
+            if (wrongList.length > 0) {
                 const wrongBook = getStorage('wrongBook', []);
                 wrongList.forEach(w => {
                     wrongBook.unshift({
                         ...w,
                         grade: currentConfig.grade,
                         addTime: new Date().toLocaleString(),
-                        reviewCount: 0,
-                        nextReview: Date.now()
+                        nextReview: Date.now() + 86400000 // 次日复习
                     });
                 });
                 saveStorage('wrongBook', wrongBook);
             }
 
+            // 打卡
             updateCheckin();
+            // 勋章检测
             checkMedals(score, avgTime);
+            // 渲染结果
             renderResult(score, accuracy, totalSeconds, wrongList, avgTime);
             switchPage('resultPage');
+        }
+
+        function updateKnowledgeStats(grade, knowledge, isCorrect) {
+            const stats = getStorage('knowledge_stats', {});
+            if (!stats[grade]) stats[grade] = {};
+            if (!stats[grade][knowledge]) stats[grade][knowledge] = { total: 0, correct: 0 };
+            stats[grade][knowledge].total++;
+            if (isCorrect) stats[grade][knowledge].correct++;
+            saveStorage('knowledge_stats', stats);
         }
 
         function renderResult(score, accuracy, timeUsed, wrongList, avgTime) {
@@ -1798,35 +1783,37 @@
             document.getElementById('resultTime').textContent = formatTime(timeUsed);
             document.getElementById('resultWrong').textContent = wrongList.length;
 
+            // 个性化评语
             let suggestion = '';
-            if(score >= 90) {
-                if(parseFloat(avgTime) < 5) {
-                    suggestion = '正确率和速度都非常优秀，计算功底扎实！可以尝试提升难度挑战更高阶的题型，继续保持每日练习巩固优势。';
+            if (score >= 90) {
+                if (parseFloat(avgTime) < 5) {
+                    suggestion = '正确率和速度都非常优秀，计算功底扎实！可以尝试提升难度挑战更高阶题型，继续保持每日练习巩固优势。';
                 } else {
                     suggestion = '正确率很高，基础掌握牢固！可以在保证准确的前提下适当提升答题速度，训练计算熟练度。';
                 }
-            } else if(score >= 70) {
+            } else if (score >= 70) {
                 suggestion = '整体表现不错，但还有提升空间。建议针对错题对应的知识点加强专项练习，注意计算过程中的细节，减少粗心失误。';
             } else {
                 suggestion = '本次练习正确率有待提升，建议回归课本巩固基础知识点，从基础难度开始循序渐进，坚持每天定量练习，逐步提高计算能力。';
             }
             document.getElementById('suggestionText').textContent = suggestion;
 
+            // 错题详情
             const wrongContainer = document.getElementById('wrongList');
             const wrongSection = document.getElementById('wrongDetailSection');
-            if(wrongList.length === 0) {
+            if (wrongList.length === 0) {
                 wrongSection.classList.add('hidden');
             } else {
                 wrongSection.classList.remove('hidden');
                 wrongContainer.innerHTML = wrongList.map((w, i) => `
                     <div class="border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 rounded-lg p-4">
-                        <div class="font-medium mb-2">第${i+1}题：${w.question}</div>
+                        <div class="font-medium mb-2">第${i + 1}题：${w.question}</div>
                         <div class="flex gap-6 text-sm mb-2">
                             <span>你的答案：<span class="text-red-500 font-medium">${w.userAnswer}</span></span>
                             <span>正确答案：<span class="text-green-600 font-medium">${w.correctAnswer}</span></span>
                         </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">知识点：${w.knowledge}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">解析：${w.analysis}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">知识点：${w.knowledge}</div>
+                        <div class="text-sm text-gray-700 dark:text-gray-300">解析：${w.analysis}</div>
                     </div>
                 `).join('');
             }
@@ -1836,18 +1823,18 @@
             startQuiz();
         }
 
-        // ========== 错题特训 ==========
-        function startWrongPractice(all = false) {
+        // ===================== 错题特训 =====================
+        function startWrongPractice(mode) {
             let wrongBook = getStorage('wrongBook', []);
-            if(wrongBook.length === 0) {
+            if (wrongBook.length === 0) {
                 alert('暂无错题');
                 return;
             }
 
-            if(!all) {
+            if (mode === 'review') {
                 const now = Date.now();
                 wrongBook = wrongBook.filter(w => w.nextReview <= now);
-                if(wrongBook.length === 0) {
+                if (wrongBook.length === 0) {
                     alert('今日没有需要复习的错题，明天再来吧！');
                     return;
                 }
@@ -1861,7 +1848,8 @@
                 answer: item.correctAnswer,
                 type: item.type,
                 knowledge: item.knowledge,
-                isFraction: item.type === 'fraction' || item.type === 'simple' && typeof item.correctAnswer === 'string' && item.correctAnswer.includes('/')
+                analysis: item.analysis,
+                isFraction: item.type === 'fraction'
             }));
 
             userAnswers = new Array(questionList.length).fill('');
@@ -1873,21 +1861,21 @@
             renderQuestion();
         }
 
-        // ========== 统计页面 ==========
+        // ===================== 统计页面 =====================
         function renderStats() {
             const records = getStorage('records', []);
             const wrongBook = getStorage('wrongBook', []);
 
             document.getElementById('totalTrainCount').textContent = records.length;
-            const totalQ = records.reduce((sum, r) => sum + r.count, 0);
+            const totalQ = records.reduce((sum, r) => sum + (r.count || 0), 0);
             document.getElementById('totalQuestionCount').textContent = totalQ;
-            
-            const avgAcc = records.length > 0 
-                ? Math.round(records.reduce((sum, r) => sum + r.score, 0) / records.length)
+
+            const avgAcc = records.length > 0
+                ? Math.round(records.reduce((sum, r) => sum + (r.score || 0), 0) / records.length)
                 : 0;
             document.getElementById('avgAccuracy').textContent = avgAcc + '%';
 
-            const bestScore = records.length > 0 ? Math.max(...records.map(r => r.score)) : 0;
+            const bestScore = records.length > 0 ? Math.max(...records.map(r => r.score || 0)) : 0;
             document.getElementById('bestScore').textContent = bestScore + '%';
 
             renderScoreChart(records);
@@ -1901,7 +1889,7 @@
             const labels = recent.map(r => r.time.split(' ')[0].slice(5));
             const scores = recent.map(r => r.score);
 
-            if(scoreChartInstance) scoreChartInstance.destroy();
+            if (scoreChartInstance) scoreChartInstance.destroy();
 
             const ctx = document.getElementById('scoreChart').getContext('2d');
             scoreChartInstance = new Chart(ctx, {
@@ -1945,8 +1933,8 @@
                 .sort((a, b) => a.acc - b.acc)
                 .slice(0, 5);
 
-            if(list.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-400 py-6">多做练习后生成薄弱点分析</div>';
+            if (list.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-6 text-sm">多做练习后生成薄弱点分析</div>';
                 return;
             }
 
@@ -1963,14 +1951,36 @@
             `).join('');
         }
 
-        // ========== 打卡日历 ==========
+        // ===================== 打卡日历 =====================
         function updateCheckin() {
-            const today = new Date().toDateString();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const checkins = getStorage('checkins', []);
-            if(!checkins.includes(today)) {
-                checkins.push(today);
+            const has = checkins.some(t => {
+                const d = new Date(t);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() === today.getTime();
+            });
+            if (!has) {
+                checkins.push(today.getTime());
                 saveStorage('checkins', checkins);
             }
+        }
+
+        function calcStreak(checkins) {
+            if (!checkins.length) return 0;
+            let streak = 0;
+            let now = new Date();
+            now.setHours(0, 0, 0, 0);
+            for (let i = checkins.length - 1; i >= 0; i--) {
+                let d = new Date(checkins[i]);
+                d.setHours(0, 0, 0, 0);
+                const diff = (now - d) / 86400000;
+                if (diff > 1) break;
+                streak++;
+                now = d;
+            }
+            return streak;
         }
 
         function renderCalendar() {
@@ -1985,38 +1995,25 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
             let html = '';
-            const weekDays = ['日','一','二','三','四','五','六'];
-            weekDays.forEach(d => html += `<div class="text-center text-xs text-gray-400 py-1">${d}</div>`);
-
-            for(let i = 0; i < firstDay; i++) html += '<div></div>';
-            for(let d = 1; d <= daysInMonth; d++) {
-                const dateStr = new Date(year, month, d).toDateString();
-                const checked = checkins.includes(dateStr);
+            for (let i = 0; i < firstDay; i++) html += '<div></div>';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                const checked = checkins.some(t => {
+                    const cd = new Date(t);
+                    return cd.getFullYear() === year && cd.getMonth() === month && cd.getDate() === d;
+                });
                 const isToday = d === now.getDate();
                 html += `
-                    <div class="text-center text-xs py-1 rounded-full ${checked ? 'bg-primary text-white' : isToday ? 'ring-1 ring-primary text-primary' : 'text-gray-600 dark:text-gray-400'}">
+                    <div class="calendar-day text-center text-xs py-1 rounded-full ${checked ? 'bg-primary text-white' : isToday ? 'ring-1 ring-primary text-primary' : 'text-gray-600 dark:text-gray-400'}">
                         ${d}
                     </div>
                 `;
             }
-
             document.getElementById('calendarGrid').innerHTML = html;
         }
 
-        function calcStreak(checkins) {
-            let streak = 0;
-            const today = new Date();
-            for(let i = 0; i < 365; i++) {
-                const d = new Date(today);
-                d.setDate(today.getDate() - i);
-                if(checkins.includes(d.toDateString())) streak++;
-                else break;
-            }
-            return streak;
-        }
-
-        // ========== 勋章体系 ==========
-        const medalConfig = [
+        // ===================== 勋章体系 =====================
+        const MEDAL_CONFIG = [
             { id: 'first', name: '初次挑战', icon: '🎯', desc: '完成第一次训练' },
             { id: 'full100', name: '满分达人', icon: '💯', desc: '单次训练获得满分' },
             { id: 'streak3', name: '三日坚持', icon: '🔥', desc: '连续打卡3天' },
@@ -2029,23 +2026,22 @@
             const unlocked = getStorage('medals', []);
             const checkins = getStorage('checkins', []);
             const streak = calcStreak(checkins);
-            const records = getStorage('records', []);
-
             const newMedals = [];
-            if(records.length >= 1 && !unlocked.includes('first')) newMedals.push('first');
-            if(score === 100 && !unlocked.includes('full100')) newMedals.push('full100');
-            if(streak >= 3 && !unlocked.includes('streak3')) newMedals.push('streak3');
-            if(streak >= 7 && !unlocked.includes('streak7')) newMedals.push('streak7');
-            if(parseFloat(avgTime) < 3 && !unlocked.includes('speed')) newMedals.push('speed');
-            if(currentConfig.difficulty === 'hard' && score === 100 && !unlocked.includes('hard100')) newMedals.push('hard100');
 
-            if(newMedals.length > 0) {
+            if (!unlocked.includes('first')) newMedals.push('first');
+            if (score === 100 && !unlocked.includes('full100')) newMedals.push('full100');
+            if (streak >= 3 && !unlocked.includes('streak3')) newMedals.push('streak3');
+            if (streak >= 7 && !unlocked.includes('streak7')) newMedals.push('streak7');
+            if (parseFloat(avgTime) < 3 && !unlocked.includes('speed')) newMedals.push('speed');
+            if (currentConfig.difficulty === 'hard' && score === 100 && !unlocked.includes('hard100')) newMedals.push('hard100');
+
+            if (newMedals.length > 0) {
                 saveStorage('medals', [...unlocked, ...newMedals]);
                 const box = document.getElementById('medalBox');
                 const list = document.getElementById('medalList');
                 box.classList.remove('hidden');
                 list.innerHTML = newMedals.map(id => {
-                    const m = medalConfig.find(x => x.id === id);
+                    const m = MEDAL_CONFIG.find(x => x.id === id);
                     return `<div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 py-2 text-center">
                         <div class="text-2xl">${m.icon}</div>
                         <div class="text-xs font-medium">${m.name}</div>
@@ -2057,7 +2053,7 @@
         function renderMedals() {
             const unlocked = getStorage('medals', []);
             const container = document.getElementById('medalWall');
-            container.innerHTML = medalConfig.map(m => {
+            container.innerHTML = MEDAL_CONFIG.map(m => {
                 const has = unlocked.includes(m.id);
                 return `
                     <div class="text-center ${has ? '' : 'opacity-30 grayscale'}">
@@ -2069,22 +2065,22 @@
             }).join('');
         }
 
-        // ========== 错题本页面 ==========
+        // ===================== 错题本页面 =====================
         function renderWrongBook(filter = 'all') {
             let wrongBook = getStorage('wrongBook', []);
             const container = document.getElementById('wrongBookList');
 
-            if(filter !== 'all') {
+            if (filter !== 'all') {
                 wrongBook = wrongBook.filter(w => {
-                    if(filter === 'careless') return w.userAnswer && !isNaN(parseFloat(w.userAnswer));
-                    if(filter === 'concept') return w.knowledge?.includes('概念');
-                    if(filter === 'fraction') return w.type === 'fraction';
-                    if(filter === 'symbol') return w.type === 'rational';
+                    if (filter === 'careless') return w.errorType === '粗心计算失误';
+                    if (filter === 'concept') return w.errorType === '公式概念不熟';
+                    if (filter === 'fraction') return w.errorType === '约分失误';
+                    if (filter === 'symbol') return w.errorType === '符号错误';
                     return true;
                 });
             }
 
-            if(wrongBook.length === 0) {
+            if (wrongBook.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-400 py-10">暂无错题</div>';
                 return;
             }
@@ -2108,27 +2104,30 @@
         }
 
         function removeWrong(index) {
-            if(!confirm('确定删除这道错题吗？')) return;
+            if (!confirm('确定删除这道错题吗？')) return;
             const wrongBook = getStorage('wrongBook', []);
             wrongBook.splice(index, 1);
             saveStorage('wrongBook', wrongBook);
             renderWrongBook();
         }
 
-        // ========== 历史记录 ==========
+        // ===================== 历史记录 =====================
         function renderHistory(range = 'all') {
             let records = getStorage('records', []);
             const container = document.getElementById('historyList');
             const now = Date.now();
 
-            if(range === 'today') {
-                const today = new Date().toDateString();
-                records = records.filter(r => new Date(r.time).toDateString() === today);
-            } else if(range === 'week') {
-                records = records.filter(r => now - new Date(r.time).getTime() < 7 * 86400000);
+            // 按时间范围过滤
+            if (range === 'today') {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                records = records.filter(r => new Date(r.time).getTime() >= today.getTime());
+            } else if (range === 'week') {
+                const weekAgo = now - 7 * 86400000;
+                records = records.filter(r => new Date(r.time).getTime() >= weekAgo);
             }
 
-            if(records.length === 0) {
+            if (records.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-400 py-10">暂无训练记录</div>';
                 return;
             }
@@ -2151,243 +2150,344 @@
             `).join('');
         }
 
-        // ========== 工具中心：打印试卷 ==========
+        // ===================== 打印试卷生成 =====================
         function generatePrintPaper() {
             const grade = parseInt(document.getElementById('paperGrade').value);
             const count = parseInt(document.getElementById('paperCount').value);
-            
-            const oldConfig = {...currentConfig};
+            const type = document.getElementById('paperType').value;
+
+            // 临时保存原配置，生成后恢复
+            const oldConfig = { ...currentConfig };
             currentConfig.grade = grade;
-            currentConfig.types = typeConfig[grade].map(t => t.id);
+            currentConfig.types = type === 'all' ? TYPE_CONFIG[grade].map(t => t.id) : [type];
             currentConfig.difficulty = 'basic';
             generateQuestions();
 
-            const questionsHtml = questionList.map((q, i) => 
-                `<div style="padding: 8px 0; font-size: 16px;">${i+1}. ${q.text} ________</div>`
+            // 填充打印区域题目
+            const questionsHtml = questionList.map((q, i) =>
+                `<div style="padding: 8px 0; font-size: 16px;">${i + 1}. ${q.text} ________</div>`
             ).join('');
-
-            const answersHtml = questionList.map((q, i) => 
-                `<div style="font-size: 12px; line-height: 1.8;">${i+1}. ${q.answer}</div>`
+            // 填充答案区
+            const answersHtml = questionList.map((q, i) =>
+                `<div style="font-size: 12px; line-height: 1.8;">${i + 1}. ${q.answer}</div>`
             ).join('');
 
             document.getElementById('printQuestions').innerHTML = questionsHtml;
             document.getElementById('printAnswers').innerHTML = answersHtml;
-            
+
+            // 调用浏览器打印
             window.print();
+            // 恢复原配置
             currentConfig = oldConfig;
         }
 
-        // ========== 数据导入导出 ==========
+        // ===================== 数据导入导出 =====================
+        // 导出全部系统数据备份
         function exportAllData() {
-            const data = {
+            const fullData = {
                 user: getStorage('user'),
+                settings: getStorage('settings'),
                 records: getStorage('records', []),
                 wrongBook: getStorage('wrongBook', []),
-                knowledge_stats: getStorage('knowledge_stats', {}),
                 checkins: getStorage('checkins', []),
+                knowledge_stats: getStorage('knowledge_stats', {}),
                 medals: getStorage('medals', []),
-                settings: getStorage('settings', {}),
                 exportTime: new Date().toLocaleString()
             };
 
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const jsonStr = JSON.stringify(fullData, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `数学计算训练数据备份_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `数学计算训练系统备份_${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
             URL.revokeObjectURL(url);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const input = document.getElementById('importDataInput');
-            if(input) {
-                input.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if(!file) return;
-                    const reader = new FileReader();
-                    reader.onload = function(ev) {
-                        try {
-                            const data = JSON.parse(ev.target.result);
-                            if(!confirm('导入将覆盖现有数据，确定继续吗？')) return;
-                            Object.keys(data).forEach(key => {
-                                if(key !== 'exportTime') saveStorage(key, data[key]);
-                            });
-                            alert('导入成功');
-                            location.reload();
-                        } catch(err) {
-                            alert('文件格式错误');
+        // 导入备份数据文件
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                try {
+                    const backupData = JSON.parse(ev.target.result);
+                    if (!confirm('导入备份将覆盖本地所有现有数据，确认继续？')) return;
+                    // 逐项恢复存储数据
+                    Object.keys(backupData).forEach(key => {
+                        if (key !== 'exportTime') {
+                            saveStorage(key, backupData[key]);
                         }
-                    };
-                    reader.readAsText(file);
-                });
+                    });
+                    alert('数据导入成功，页面即将刷新');
+                    setTimeout(() => location.reload(), 1000);
+                } catch (err) {
+                    alert('导入失败，请检查文件格式是否正确');
+                    console.error('备份导入报错：', err);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 导出错题CSV表格
+        function exportWrongCSV() {
+            const wrongBook = getStorage('wrongBook', []);
+            if (wrongBook.length === 0) {
+                alert('暂无错题可导出');
+                return;
             }
-        });
+            const headers = ['题目', '你的答案', '正确答案', '知识点', '错误类型', '添加时间'];
+            const rows = wrongBook.map(item => [
+                `"${(item.question || '').replace(/"/g, '""')}"`,
+                `"${(item.userAnswer || '').replace(/"/g, '""')}"`,
+                `"${(item.correctAnswer || '').replace(/"/g, '""')}"`,
+                `"${(item.knowledge || '').replace(/"/g, '""')}"`,
+                `"${(item.errorType || '').replace(/"/g, '""')}"`,
+                `"${(item.addTime || '').replace(/"/g, '""')}"`
+            ]);
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `数学错题本_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
 
-       // 全局存储兜底函数（防止首页读取localStorage报错无法进入系统）
-function saveStorage(key, data) {
-    try {
-        localStorage.setItem(key, JSON.stringify(data))
-    } catch (e) {
-        console.error('存储失败', key, e)
-    }
-}
-function getStorage(key, defaultVal = null) {
-    try {
-        const str = localStorage.getItem(key)
-        return str ? JSON.parse(str) : defaultVal
-    } catch (e) {
-        console.error('读取存储失败', key, e)
-        return defaultVal
-    }
-}
+        // 清空所有本地数据
+        function clearAllData() {
+            if (!confirm('确定要清空所有本地数据吗？此操作不可恢复，建议先导出备份。')) return;
+            localStorage.clear();
+            location.reload();
+        }
 
-// 深色模式渲染
-function applySettings() {
-    const settings = getStorage('settings', { darkMode: false });
-    const sw = document.querySelector('#darkSwitch');
-    if (!sw) return;
-    if (settings.darkMode) {
-        document.documentElement.classList.add('dark');
-        sw.classList.remove('bg-gray-300');
-        sw.classList.add('bg-primary');
-        sw.querySelector('span').style.transform = 'translateX(24px)';
-    } else {
-        document.documentElement.classList.remove('dark');
-        sw.classList.remove('bg-primary');
-        sw.classList.add('bg-gray-300');
-        sw.querySelector('span').style.transform = 'translateX(0)';
-    }
-}
+        // ===================== 深色模式控制 =====================
+        function toggleDarkMode() {
+            settings.darkMode = !settings.darkMode;
+            saveStorage('settings', settings);
+            applyDarkMode();
+        }
 
-function toggleDarkMode() {
-    let settings = getStorage('settings', { darkMode: false });
-    settings.darkMode = !settings.darkMode;
-    saveStorage('settings', settings);
-    applySettings();
-}
+        function applyDarkMode() {
+            if (settings.darkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            // 同步更新所有深色开关样式
+            updateSwitchStyle(document.getElementById('darkSwitch2'), settings.darkMode);
+            updateSwitchStyle(document.getElementById('darkSwitch'), settings.darkMode);
+        }
 
-// 导出错题CSV表格
-function exportWrongCSV() {
-    const wrongBook = getStorage('wrongBook', []);
-    if (wrongBook.length === 0) {
-        alert('暂无错题可导出');
-        return;
-    }
-    const headers = ['题目', '你的答案', '正确答案', '知识点', '题型', '添加时间'];
-    const rows = wrongBook.map(item => [
-        `"${(item.question || '').replace(/"/g, '""')}"`,
-        `"${(item.userAnswer || '').replace(/"/g, '""')}"`,
-        `"${(item.correctAnswer || '').replace(/"/g, '""')}"`,
-        `"${(item.knowledge || '').replace(/"/g, '""')}"`,
-        `"${(item.type || '').replace(/"/g, '""')}"`,
-        `"${(item.addTime || '').replace(/"/g, '""')}"`
-    ]);
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `数学错题本_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-}
+        function updateSwitchStyle(el, isOn) {
+            if (!el) return;
+            const dot = el.querySelector('span');
+            if (isOn) {
+                el.classList.remove('bg-gray-300');
+                el.classList.add('bg-primary');
+                dot.style.transform = 'translateX(24px)';
+            } else {
+                el.classList.remove('bg-primary');
+                el.classList.add('bg-gray-300');
+                dot.style.transform = 'translateX(0)';
+            }
+        }
 
-// 导入备份数据
-function importData(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function (ev) {
-        try {
-            const data = JSON.parse(ev.target.result);
-            if (!confirm('导入数据将覆盖本地现有记录，确定继续吗？')) return;
-            Object.keys(data).forEach(key => {
-                if (key !== 'exportTime') {
-                    saveStorage(key, data[key]);
+        // ===================== 全局事件绑定 =====================
+        function bindAllEvents() {
+            // 欢迎页表单提交
+            document.getElementById('welcomeForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const name = document.getElementById('userName').value.trim();
+                const school = document.getElementById('userSchool').value.trim();
+                const grade = document.getElementById('userGrade').value;
+                currentUser = { name, school, grade };
+                saveStorage('user', currentUser);
+                initGradeDefault(grade);
+                switchPage('homePage');
+            });
+
+            // 跳过欢迎页
+            document.getElementById('skipBtn').addEventListener('click', function () {
+                currentUser = { name: '同学', school: '', grade: 3 };
+                saveStorage('user', currentUser);
+                initGradeDefault(3);
+                switchPage('homePage');
+            });
+
+            // 年级选择事件
+            document.getElementById('gradeSelect').addEventListener('click', function (e) {
+                if (e.target.classList.contains('grade-btn')) {
+                    const grade = parseInt(e.target.dataset.grade);
+                    initGradeDefault(grade);
                 }
             });
-            alert('数据导入成功，页面即将刷新');
-            setTimeout(() => location.reload(), 1000);
-        } catch (err) {
-            alert('导入失败，请检查文件格式是否正确');
-            console.error('导入报错：', err)
+
+            // 难度选择
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentConfig.difficulty = this.dataset.diff;
+                    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                });
+            });
+
+            // 题量选择
+            document.querySelectorAll('.count-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentConfig.count = parseInt(this.dataset.count);
+                    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                });
+            });
+
+            // 限时模式时长选择
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentConfig.time = parseInt(this.dataset.time);
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                });
+            });
+
+            // 训练模式切换
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    currentConfig.mode = this.dataset.mode;
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary'));
+                    this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                    if (currentConfig.mode === 'time') {
+                        document.getElementById('countSetting').classList.add('hidden');
+                        document.getElementById('timeSetting').classList.remove('hidden');
+                    } else {
+                        document.getElementById('countSetting').classList.remove('hidden');
+                        document.getElementById('timeSetting').classList.add('hidden');
+                    }
+                });
+            });
+
+            // 开始答题按钮
+            document.getElementById('startBtn').addEventListener('click', startQuiz);
+
+            // 继续未完成训练
+            document.getElementById('continueBtn').addEventListener('click', continueQuiz);
+
+            // 答题页操作按钮
+            document.getElementById('prevBtn').addEventListener('click', prevQuestion);
+            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+            document.getElementById('submitAllBtn').addEventListener('click', function () {
+                if (confirm('确定要提前交卷吗？未作答的题目按错误计算。')) submitQuiz();
+            });
+
+            // 暂停/继续
+            document.getElementById('pauseBtn').addEventListener('click', pauseQuiz);
+            document.getElementById('resumeBtn').addEventListener('click', resumeQuiz);
+
+            // 符号快捷栏
+            document.querySelectorAll('.symbol-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const input = document.getElementById('answerInput');
+                    if (input) {
+                        input.value += this.dataset.s;
+                        input.focus();
+                    }
+                });
+            });
+
+            // 回车提交答案
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && document.getElementById('quizPage').classList.contains('active')) {
+                    if (document.activeElement.id === 'answerInput') {
+                        nextQuestion();
+                    }
+                }
+            });
+
+            // 错题筛选
+            document.querySelectorAll('#wrongFilter .tag-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('#wrongFilter .tag-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    renderWrongBook(this.dataset.filter);
+                });
+            });
+
+            // 错题重做相关按钮
+            document.getElementById('practiceWrongBtn').addEventListener('click', () => startWrongPractice('current'));
+            document.getElementById('allWrongBtn').addEventListener('click', () => startWrongPractice('all'));
+            document.getElementById('reviewWrongBtn').addEventListener('click', () => startWrongPractice('review'));
+
+            // 历史记录筛选
+            document.querySelectorAll('[data-range]').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    renderHistory(this.dataset.range);
+                });
+            });
+
+            // 工具页按钮
+            document.getElementById('generatePaperBtn').addEventListener('click', generatePrintPaper);
+            document.getElementById('exportDataBtn').addEventListener('click', exportAllData);
+            document.getElementById('importDataInput').addEventListener('change', importData);
+            document.getElementById('exportWrongBtn').addEventListener('click', exportWrongCSV);
+            document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
+
+            // 深色模式开关
+            document.getElementById('darkToggle').addEventListener('click', toggleDarkMode);
+            document.getElementById('darkSwitch2').addEventListener('click', toggleDarkMode);
+
+            // 答题反馈开关
+            document.getElementById('feedbackSwitch').addEventListener('click', function () {
+                settings.feedback = !settings.feedback;
+                saveStorage('settings', settings);
+                updateSwitchStyle(this, settings.feedback);
+            });
         }
-    };
-    reader.readAsText(file);
-}
 
-// 更新首页数据概览
-function updateHomeData() {
-    const records = getStorage('records', []);
-    const wrongBook = getStorage('wrongBook', []);
-    const totalQ = records.reduce((sum, r) => sum + (r.count || 0), 0);
-    const avgAcc = records.length > 0
-        ? Math.round(records.reduce((sum, r) => sum + (r.score || 0), 0) / records.length)
-        : 0;
-    const streak = calcStreak(getStorage('checkins', []));
-    const pendingReview = wrongBook.filter(w => w.nextReview <= Date.now()).length;
-
-    let homeTotal = document.getElementById('homeTotal');
-    let homeAcc = document.getElementById('homeAcc');
-    let homeDay = document.getElementById('homeDay');
-    let homeWrong = document.getElementById('homeWrong');
-    if(homeTotal) homeTotal.textContent = totalQ;
-    if(homeAcc) homeAcc.textContent = avgAcc + '%';
-    if(homeDay) homeDay.textContent = streak;
-    if(homeWrong) homeWrong.textContent = pendingReview;
-}
-
-function showUserInfo() {
-    const userInfoEl = document.getElementById('userInfo');
-    const nameEl = document.getElementById('showUserName');
-    const currentUser = getStorage('currentUser', {});
-    if (currentUser && currentUser.name && userInfoEl && nameEl) {
-        userInfoEl.classList.remove('hidden');
-        nameEl.textContent = currentUser.name;
-    }
-}
-
-// 修复考试按钮绑定（下一题/交卷点击无响应）
-function bindExamBtn() {
-    const nextBtn = document.getElementById('nextQuestion');
-    const submitBtn = document.getElementById('submitPaper');
-    if (nextBtn) {
-        nextBtn.onclick = function () {
+        // ===================== 页面初始化入口 =====================
+        function init() {
             try {
-                nextQuestion()
-            } catch (e) {
-                console.error("下一题报错", e)
-                alert('切换题目失败，请刷新页面重试')
+                // 加载全局配置
+                settings = getStorage('settings', { darkMode: false, feedback: true });
+                currentUser = getStorage('user', {});
+
+                // 应用深色模式
+                applyDarkMode();
+
+                // 渲染年级选项
+                renderGradeOptions();
+
+                // 绑定所有事件
+                bindAllEvents();
+
+                // 检查未完成训练
+                checkUnfinished();
+
+                // 更新首页统计数据
+                updateHomeData();
+
+                // 显示用户信息
+                showUserInfo();
+
+                // 页面跳转逻辑：有用户信息进首页，无则进欢迎页
+                if (currentUser && currentUser.name) {
+                    switchPage('homePage');
+                    initGradeDefault(currentUser.grade || 3);
+                } else {
+                    switchPage('welcomePage');
+                }
+            } catch (globalErr) {
+                console.error('页面全局初始化异常：', globalErr);
+                // 异常兜底，确保首页可访问
+                switchPage('homePage');
             }
         }
-    }
-    if (submitBtn) {
-        submitBtn.onclick = function () {
-            try {
-                submitPaper()
-            } catch (e) {
-                console.error("交卷报错", e)
-                alert('交卷失败，检查是否完成所有题目')
-            }
-        }
-    }
-}
 
-// 页面初始化入口，全部逻辑包裹try-catch，首页不会卡死无法进入
-function init() {
-    try {
-        applySettings();
-        updateHomeData();
-        showUserInfo();
-        bindExamBtn();
-    } catch (e) {
-        console.error('页面初始化全局异常，不阻断页面加载：', e)
-    }
-}
-
-// DOM加载完成执行初始化
-document.addEventListener('DOMContentLoaded', init);
-</script>
+        // DOM加载完成后执行初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
