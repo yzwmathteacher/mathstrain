@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中山市思成教育 - 中小学数学计算训练系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#4080FF',
+                        light: '#E8F3FF',
+                    },
+                    fontFamily: {
+                        sans: ['PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .watermark {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                color: rgba(22, 93, 255, 0.15);
+                font-size: 14px;
+                pointer-events: none;
+                z-index: 0;
+            }
+            .page {
+                display: none;
+            }
+            .page.active {
+                display: block;
+            }
+            .input-focus {
+                @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+    <!-- 水印 -->
+    <div class="watermark">中山市思成教育 · 数学计算训练系统</div>
+
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-primary">思成教育 · 数学计算训练系统</h1>
+            <div id="userInfo" class="text-sm text-gray-600 hidden">
+                <span id="showUserName"></span>
+                <button id="logoutBtn" class="ml-3 text-primary hover:underline">退出</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        <!-- 1. 注册页面 -->
+        <div id="registerPage" class="page active">
+            <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-8 mt-10">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-light rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">欢迎加入思成计算训练</h2>
+                    <p class="text-gray-500 mt-2">请填写信息开启训练之旅</p>
+                </div>
+                <form id="registerForm" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">学生姓名</label>
+                        <input type="text" id="userName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus" placeholder="请输入姓名">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">所在学校</label>
+                        <input type="text" id="userSchool" required class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus" placeholder="请输入学校名称">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">当前年级</label>
+                        <select id="userGrade" class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                            <option value="1">一年级</option>
+                            <option value="2">二年级</option>
+                            <option value="3">三年级</option>
+                            <option value="4">四年级</option>
+                            <option value="5">五年级</option>
+                            <option value="6">六年级</option>
+                            <option value="7">七年级</option>
+                            <option value="8">八年级</option>
+                            <option value="9">九年级</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 rounded-lg transition-colors mt-2">
+                        进入训练系统
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. 首页（选题页面） -->
+        <div id="homePage" class="page">
+            <!-- 功能导航 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <button onclick="switchPage('homePage')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-primary text-primary font-medium">
+                    📝 开始训练
+                </button>
+                <button onclick="switchPage('statsPage')" class="bg-white p-4 rounded-xl shadow-sm hover:border-primary/50 border-2 border-transparent transition-colors">
+                    📊 成绩统计
+                </button>
+                <button onclick="switchPage('wrongPage')" class="bg-white p-4 rounded-xl shadow-sm hover:border-primary/50 border-2 border-transparent transition-colors">
+                    ❌ 错题本
+                </button>
+                <button onclick="switchPage('historyPage')" class="bg-white p-4 rounded-xl shadow-sm hover:border-primary/50 border-2 border-transparent transition-colors">
+                    📋 历史记录
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">选择训练内容</h2>
+                
+                <div class="space-y-6">
+                    <!-- 年级选择 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">选择年级</label>
+                        <div class="grid grid-cols-3 md:grid-cols-5 gap-3" id="gradeSelect">
+                            <button data-grade="1" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">一年级</button>
+                            <button data-grade="2" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">二年级</button>
+                            <button data-grade="3" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">三年级</button>
+                            <button data-grade="4" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">四年级</button>
+                            <button data-grade="5" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">五年级</button>
+                            <button data-grade="6" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">六年级</button>
+                            <button data-grade="7" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">七年级</button>
+                            <button data-grade="8" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">八年级</button>
+                            <button data-grade="9" class="grade-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">九年级</button>
+                        </div>
+                    </div>
+
+                    <!-- 题型选择 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">题目类型</label>
+                        <div class="grid grid-cols-3 gap-3" id="typeSelect">
+                            <button data-type="oral" class="type-btn py-3 rounded-lg border border-gray-300 hover:border-primary transition-colors">口算题</button>
+                            <button data-type="simple" class="type-btn py-3 rounded-lg border border-gray-300 hover:border-primary transition-colors">简便计算</button>
+                            <button data-type="word" class="type-btn py-3 rounded-lg border border-gray-300 hover:border-primary transition-colors">应用题</button>
+                        </div>
+                    </div>
+
+                    <!-- 题量选择 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">题目数量</label>
+                        <div class="grid grid-cols-4 gap-3" id="countSelect">
+                            <button data-count="10" class="count-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">10道</button>
+                            <button data-count="20" class="count-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">20道</button>
+                            <button data-count="30" class="count-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">30道</button>
+                            <button data-count="50" class="count-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">50道</button>
+                        </div>
+                    </div>
+
+                    <!-- 难度选择 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">难度等级</label>
+                        <div class="grid grid-cols-2 gap-3" id="difficultySelect">
+                            <button data-difficulty="basic" class="diff-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">基础版</button>
+                            <button data-difficulty="hard" class="diff-btn py-2 rounded-lg border border-gray-300 hover:border-primary transition-colors">提升版</button>
+                        </div>
+                    </div>
+
+                    <button id="startBtn" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                        开始答题
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 答题页面 -->
+        <div id="quizPage" class="page">
+            <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+                <!-- 答题头部信息 -->
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+                    <div class="text-sm text-gray-600">
+                        <span id="quizProgress">第 1 / 10 题</span>
+                        <span class="mx-2">|</span>
+                        <span id="quizType">口算题</span>
+                    </div>
+                    <div class="text-lg font-mono font-bold text-primary" id="timer">00:00</div>
+                </div>
+
+                <!-- 题目区域 -->
+                <div class="text-center py-10">
+                    <div id="questionText" class="text-2xl md:text-3xl font-medium mb-8 min-h-[60px]">
+                        题目加载中...
+                    </div>
+                    <div class="max-w-xs mx-auto">
+                        <input type="text" id="answerInput" class="w-full text-center text-xl py-3 border-2 border-gray-200 rounded-lg input-focus" placeholder="请输入答案" autocomplete="off">
+                        <p id="unitTip" class="text-sm text-gray-400 mt-2 hidden">单位：个/米/元等</p>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex justify-between mt-8">
+                    <button id="prevBtn" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">上一题</button>
+                    <button id="submitAllBtn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">提交全部</button>
+                    <button id="nextBtn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">下一题</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 结果页面 -->
+        <div id="resultPage" class="page">
+            <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+                <div class="text-center mb-8">
+                    <div class="text-5xl font-bold text-primary mb-2" id="resultScore">90</div>
+                    <div class="text-gray-500">本次得分</div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="bg-light rounded-lg p-4 text-center">
+                        <div class="text-xl font-bold text-primary" id="resultAccuracy">90%</div>
+                        <div class="text-sm text-gray-600">正确率</div>
+                    </div>
+                    <div class="bg-light rounded-lg p-4 text-center">
+                        <div class="text-xl font-bold text-primary" id="resultTime">05:30</div>
+                        <div class="text-sm text-gray-600">总用时</div>
+                    </div>
+                    <div class="bg-light rounded-lg p-4 text-center">
+                        <div class="text-xl font-bold text-primary" id="resultWrong">2</div>
+                        <div class="text-sm text-gray-600">错题数</div>
+                    </div>
+                </div>
+
+                <!-- 学习建议 -->
+                <div class="bg-blue-50 rounded-lg p-5 mb-8 border-l-4 border-primary">
+                    <h3 class="font-bold text-primary mb-2">💡 学习建议</h3>
+                    <p id="suggestionText" class="text-gray-700 leading-relaxed"></p>
+                </div>
+
+                <!-- 错题详情 -->
+                <div id="wrongDetailSection" class="mb-8">
+                    <h3 class="font-bold text-gray-800 mb-4">错题详情</h3>
+                    <div id="wrongList" class="space-y-3">
+                        <!-- 错题动态插入 -->
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="switchPage('homePage')" class="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">返回首页</button>
+                    <button onclick="restartQuiz()" class="flex-1 py-3 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">再练一次</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 统计页面 -->
+        <div id="statsPage" class="page">
+            <div class="bg-white rounded-xl shadow-md p-6 md:p-8 mb-6">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">成绩趋势分析</h2>
+                <div class="h-80">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-primary" id="totalTrainCount">0</div>
+                    <div class="text-sm text-gray-500">总训练次数</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-primary" id="totalQuestionCount">0</div>
+                    <div class="text-sm text-gray-500">累计做题</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-primary" id="avgAccuracy">0%</div>
+                    <div class="text-sm text-gray-500">平均正确率</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-primary" id="totalWrongCount">0</div>
+                    <div class="text-sm text-gray-500">错题总数</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. 错题本页面 -->
+        <div id="wrongPage" class="page">
+            <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">我的错题本</h2>
+                    <button id="practiceWrongBtn" class="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-secondary transition-colors">重做错题</button>
+                </div>
+                <div id="wrongBookList" class="space-y-3">
+                    <div class="text-center text-gray-400 py-10">暂无错题，继续加油！</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. 历史记录页面 -->
+        <div id="historyPage" class="page">
+            <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">历史训练记录</h2>
+                <div id="historyList" class="space-y-3">
+                    <div class="text-center text-gray-400 py-10">暂无训练记录</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center text-gray-400 text-sm py-6">
+        © 中山市思成教育 版权所有 | 数学计算训练系统
+    </footer>
+
+    <script>
+        // ===================== 全局变量 =====================
+        let currentUser = null;
+        let currentConfig = {
+            grade: null,
+            type: null,
+            count: null,
+            difficulty: 'basic'
+        };
+        let questionList = [];
+        let userAnswers = [];
+        let currentIndex = 0;
+        let timerInterval = null;
+        let startTime = null;
+        let totalSeconds = 0;
+        let scoreChartInstance = null;
+
+        // ===================== 工具函数 =====================
+        // 页面切换
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            if(pageId === 'statsPage') renderStats();
+            if(pageId === 'wrongPage') renderWrongBook();
+            if(pageId === 'historyPage') renderHistory();
+        }
+
+        // 随机整数
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // 存储相关
+        function saveToStorage(key, data) {
+            localStorage.setItem(`sc_${key}`, JSON.stringify(data));
+        }
+        function getFromStorage(key) {
+            const data = localStorage.getItem(`sc_${key}`);
+            return data ? JSON.parse(data) : null;
+        }
+
+        // ===================== 用户注册模块 =====================
+        function initUser() {
+            const savedUser = getFromStorage('user');
+            if(savedUser) {
+                currentUser = savedUser;
+                showUserInfo();
+                switchPage('homePage');
+                initGradeDefault();
+            }
+        }
+
+        function showUserInfo() {
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('showUserName').textContent = `${currentUser.name} · ${currentUser.school}`;
+        }
+
+        function initGradeDefault() {
+            const grade = currentUser.grade;
+            currentConfig.grade = grade;
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+                if(btn.dataset.grade == grade) {
+                    btn.classList.add('bg-primary', 'text-white', 'border-primary');
+                }
+            });
+            checkStartBtn();
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('userName').value.trim();
+            const school = document.getElementById('userSchool').value.trim();
+            const grade = document.getElementById('userGrade').value;
+            
+            currentUser = { name, school, grade };
+            saveToStorage('user', currentUser);
+            
+            // 初始化该用户的记录存储
+            if(!getFromStorage('records')) saveToStorage('records', []);
+            if(!getFromStorage('wrongBook')) saveToStorage('wrongBook', []);
+            
+            showUserInfo();
+            switchPage('homePage');
+            initGradeDefault();
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if(confirm('确定要退出登录吗？本地训练记录将会保留。')) {
+                currentUser = null;
+                localStorage.removeItem('sc_user');
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('registerForm').reset();
+                switchPage('registerPage');
+            }
+        });
+
+        // ===================== 选题配置模块 =====================
+        // 年级选择
+        document.querySelectorAll('.grade-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentConfig.grade = parseInt(this.dataset.grade);
+                document.querySelectorAll('.grade-btn').forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'border-primary');
+                });
+                this.classList.add('bg-primary', 'text-white', 'border-primary');
+                checkStartBtn();
+            });
+        });
+
+        // 题型选择
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentConfig.type = this.dataset.type;
+                document.querySelectorAll('.type-btn').forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'border-primary');
+                });
+                this.classList.add('bg-primary', 'text-white', 'border-primary');
+                checkStartBtn();
+            });
+        });
+
+        // 题量选择
+        document.querySelectorAll('.count-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentConfig.count = parseInt(this.dataset.count);
+                document.querySelectorAll('.count-btn').forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'border-primary');
+                });
+                this.classList.add('bg-primary', 'text-white', 'border-primary');
+                checkStartBtn();
+            });
+        });
+
+        // 难度选择
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentConfig.difficulty = this.dataset.difficulty;
+                document.querySelectorAll('.diff-btn').forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'border-primary');
+                });
+                this.classList.add('bg-primary', 'text-white', 'border-primary');
+                checkStartBtn();
+            });
+        });
+
+        function checkStartBtn() {
+            const { grade, type, count } = currentConfig;
+            const btn = document.getElementById('startBtn');
+            if(grade && type && count) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        // 默认选中基础难度
+        document.querySelector('[data-difficulty="basic"]').classList.add('bg-primary', 'text-white', 'border-primary');
+
+        // ===================== 出题引擎核心 =====================
+        function generateQuestions() {
+            const { grade, type, count, difficulty } = currentConfig;
+            questionList = [];
+            
+            for(let i = 0; i < count; i++) {
+                let q = null;
+                switch(type) {
+                    case 'oral':
+                        q = generateOralQuestion(grade, difficulty);
+                        break;
+                    case 'simple':
+                        q = generateSimpleQuestion(grade, difficulty);
+                        break;
+                    case 'word':
+                        q = generateWordQuestion(grade, difficulty);
+                        break;
+                }
+                questionList.push(q);
+            }
+            
+            userAnswers = new Array(count).fill('');
+            currentIndex = 0;
+        }
+
+        // 口算题生成
+        function generateOralQuestion(grade, difficulty) {
+            let a, b, op, answer, text;
+            const isHard = difficulty === 'hard';
+
+            switch(grade) {
+                case 1: // 一年级：20以内加减法
+                    op = Math.random() > 0.5 ? '+' : '-';
+                    if(op === '+') {
+                        a = randomInt(1, isHard ? 12 : 9);
+                        b = randomInt(1, isHard ? 8 : 9);
+                        answer = a + b;
+                    } else {
+                        a = randomInt(isHard ? 10 : 5, 20);
+                        b = randomInt(1, a);
+                        answer = a - b;
+                    }
+                    text = `${a} ${op} ${b} = `;
+                    break;
+
+                case 2: // 二年级：100以内加减、表内乘除
+                    const type2 = randomInt(1, isHard ? 3 : 2);
+                    if(type2 === 1) { // 加减
+                        op = Math.random() > 0.5 ? '+' : '-';
+                        a = randomInt(10, isHard ? 90 : 50);
+                        b = randomInt(10, isHard ? 50 : 30);
+                        if(op === '-') { if(a < b) [a,b] = [b,a]; answer = a - b; }
+                        else answer = a + b;
+                        text = `${a} ${op} ${b} = `;
+                    } else if(type2 === 2) { // 乘法
+                        a = randomInt(2, 9);
+                        b = randomInt(2, 9);
+                        answer = a * b;
+                        text = `${a} × ${b} = `;
+                    } else { // 除法
+                        b = randomInt(2, 9);
+                        answer = randomInt(2, 9);
+                        a = b * answer;
+                        text = `${a} ÷ ${b} = `;
+                    }
+                    break;
+
+                case 3: // 三年级：万以内加减、多位数乘一位数
+                    const type3 = randomInt(1, 3);
+                    if(type3 === 1) {
+                        op = Math.random() > 0.5 ? '+' : '-';
+                        a = randomInt(100, isHard ? 999 : 500);
+                        b = randomInt(100, isHard ? 999 : 500);
+                        if(op === '-') { if(a < b) [a,b] = [b,a]; answer = a - b; }
+                        else answer = a + b;
+                        text = `${a} ${op} ${b} = `;
+                    } else if(type3 === 2) {
+                        a = randomInt(10, isHard ? 999 : 99);
+                        b = randomInt(2, 9);
+                        answer = a * b;
+                        text = `${a} × ${b} = `;
+                    } else {
+                        b = randomInt(2, 9);
+                        answer = randomInt(10, isHard ? 99 : 50);
+                        a = b * answer;
+                        text = `${a} ÷ ${b} = `;
+                    }
+                    break;
+
+                case 4: // 四年级：三位数乘两位数、除数是两位数
+                    const type4 = randomInt(1, 2);
+                    if(type4 === 1) {
+                        a = randomInt(100, 999);
+                        b = randomInt(10, isHard ? 99 : 50);
+                        answer = a * b;
+                        text = `${a} × ${b} = `;
+                    } else {
+                        b = randomInt(10, isHard ? 99 : 50);
+                        answer = randomInt(5, 50);
+                        a = b * answer;
+                        text = `${a} ÷ ${b} = `;
+                    }
+                    break;
+
+                case 5: // 五年级：小数乘除法
+                    const type5 = randomInt(1, 2);
+                    if(type5 === 1) {
+                        a = randomInt(10, 99) / 10;
+                        b = randomInt(2, 9);
+                        answer = Math.round(a * b * 100) / 100;
+                        text = `${a} × ${b} = `;
+                    } else {
+                        b = randomInt(2, 9);
+                        answer = randomInt(10, 99) / 10;
+                        a = Math.round(b * answer * 10) / 10;
+                        text = `${a} ÷ ${b} = `;
+                    }
+                    break;
+
+                case 6: // 六年级：分数乘除、百分数
+                    const type6 = randomInt(1, 2);
+                    if(type6 === 1) { // 分数乘法
+                        const num1 = randomInt(1, 9);
+                        const den1 = randomInt(2, 10);
+                        const num2 = randomInt(1, 9);
+                        const den2 = randomInt(2, 10);
+                        answer = (num1 * num2) / (den1 * den2);
+                        text = `${num1}/${den1} × ${num2}/${den2} = `;
+                    } else { // 百分数计算
+                        a = randomInt(10, 200);
+                        const pct = randomInt(10, 90);
+                        answer = a * pct / 100;
+                        text = `${a} 的 ${pct}% = `;
+                    }
+                    break;
+
+                case 7: // 七年级：有理数加减乘除
+                    const type7 = randomInt(1, 3);
+                    a = randomInt(-20, 20);
+                    b = randomInt(-20, 20);
+                    if(type7 === 1) { answer = a + b; text = `${a} + (${b}) = `; }
+                    else if(type7 === 2) { answer = a - b; text = `${a} - (${b}) = `; }
+                    else { 
+                        b = randomInt(-10, 10);
+                        if(b === 0) b = 2;
+                        answer = a * b; 
+                        text = `${a} × (${b}) = `; 
+                    }
+                    break;
+
+                case 8: // 八年级：整式、实数运算
+                    const type8 = randomInt(1, 2);
+                    if(type8 === 1) { // 简单整式加减
+                        a = randomInt(1, 9);
+                        b = randomInt(1, 9);
+                        answer = a + b;
+                        text = `${a}x + ${b}x = ____x`;
+                    } else { // 平方根
+                        const n = randomInt(2, 12);
+                        answer = n;
+                        text = `√${n*n} = `;
+                    }
+                    break;
+
+                case 9: // 九年级：二次根式、一元二次方程
+                    const type9 = randomInt(1, 2);
+                    if(type9 === 1) {
+                        const n = randomInt(2, 8);
+                        answer = n;
+                        text = `√${n*n} = `;
+                    } else {
+                        // 简单方程 x + a = b
+                        a = randomInt(1, 20);
+                        b = randomInt(10, 50);
+                        answer = b - a;
+                        text = `x + ${a} = ${b}，x = `;
+                    }
+                    break;
+
+                default:
+                    a = randomInt(1, 10);
+                    b = randomInt(1, 10);
+                    answer = a + b;
+                    text = `${a} + ${b} = `;
+            }
+
+            return { text, answer, type: 'oral' };
+        }
+
+        // 简便计算题生成
+        function generateSimpleQuestion(grade, difficulty) {
+            let text, answer;
+            const isHard = difficulty === 'hard';
+
+            switch(grade) {
+                case 3:
+                    // 加减法凑整
+                    const a = randomInt(10, 99);
+                    const b = randomInt(1, 9);
+                    const c = randomInt(10, 99);
+                    answer = a + b + c;
+                    text = `${a} + ${b} + ${c} = `;
+                    break;
+
+                case 4:
+                    // 乘法分配律、结合律
+                    const type4 = randomInt(1, 2);
+                    if(type4 === 1) {
+                        const a = randomInt(2, 9);
+                        const b = randomInt(10, 99);
+                        const c = randomInt(10, 99);
+                        answer = a * (b + c);
+                        text = `${a} × ${b} + ${a} × ${c} = `;
+                    } else {
+                        const a = randomInt(2, 9);
+                        const b = randomInt(2, 9);
+                        const c = randomInt(10, 99);
+                        answer = a * b * c;
+                        text = `${a} × ${b} × ${c} = `;
+                    }
+                    break;
+
+                case 5:
+                    // 小数简便运算
+                    const a5 = randomInt(10, 99) / 10;
+                    const b5 = randomInt(10, 99) / 10;
+                    const c5 = randomInt(2, 9);
+                    answer = Math.round((a5 + b5) * c5 * 100) / 100;
+                    text = `${a5} × ${c5} + ${b5} × ${c5} = `;
+                    break;
+
+                case 6:
+                    // 分数简便运算
+                    const num1 = randomInt(1, 5);
+                    const den = randomInt(5, 10);
+                    const a6 = randomInt(5, 15);
+                    const b6 = randomInt(5, 15);
+                    answer = (num1 / den) * (a6 + b6);
+                    text = `${num1}/${den} × ${a6} + ${num1}/${den} × ${b6} = `;
+                    break;
+
+                case 7:
+                    // 有理数简便运算
+                    const a7 = randomInt(10, 50);
+                    const b7 = randomInt(1, 10);
+                    const c7 = randomInt(1, 10);
+                    answer = a7 - b7 - c7;
+                    text = `${a7} - ${b7} - ${c7} = `;
+                    break;
+
+                default:
+                    // 低年级默认简单凑整
+                    const a0 = randomInt(10, 99);
+                    const b0 = randomInt(1, 9);
+                    answer = a0 + b0;
+                    text = `${a0} + ${b0} = `;
+            }
+
+            return { text, answer, type: 'simple' };
+        }
+
+        // 应用题生成
+        function generateWordQuestion(grade, difficulty) {
+            let text, answer;
+            const isHard = difficulty === 'hard';
+
+            switch(grade) {
+                case 1:
+                    const a1 = randomInt(3, 10);
+                    const b1 = randomInt(2, 8);
+                    answer = a1 + b1;
+                    text = `小明有${a1}个苹果，妈妈又给了他${b1}个，小明现在一共有多少个苹果？`;
+                    break;
+
+                case 2:
+                    const a2 = randomInt(5, 20);
+                    const b2 = randomInt(2, 9);
+                    answer = a2 * b2;
+                    text = `每盒铅笔有${a2}支，买${b2}盒一共有多少支铅笔？`;
+                    break;
+
+                case 3:
+                    const price = randomInt(5, 20);
+                    const num = randomInt(3, 15);
+                    answer = price * num;
+                    text = `一个笔记本${price}元，买${num}个笔记本一共需要多少钱？`;
+                    break;
+
+                case 4:
+                    const speed = randomInt(40, 80);
+                    const time = randomInt(2, 8);
+                    answer = speed * time;
+                    text = `一辆汽车每小时行驶${speed}千米，行驶${time}小时，一共行驶多少千米？`;
+                    break;
+
+                case 5:
+                    const total = randomInt(100, 500);
+                    const days = randomInt(3, 10);
+                    answer = Math.round(total / days * 100) / 100;
+                    text = `工程队${days}天修路${total}米，平均每天修路多少米？（保留两位小数）`;
+                    break;
+
+                case 6:
+                    const price6 = randomInt(100, 500);
+                    const discount = randomInt(6, 9);
+                    answer = price6 * discount / 10;
+                    text = `一件衣服原价${price6}元，打${discount}折出售，现价是多少元？`;
+                    break;
+
+                case 7:
+                    const a7 = randomInt(10, 30);
+                    const b7 = randomInt(5, 20);
+                    answer = 2 * (a7 + b7);
+                    text = `一个长方形的长为${a7}cm，宽为${b7}cm，它的周长是多少厘米？`;
+                    break;
+
+                default:
+                    answer = 0;
+                    text = '应用题示例';
+            }
+
+            return { text, answer, type: 'word', unit: true };
+        }
+
+        // ===================== 答题流程控制 =====================
+        document.getElementById('startBtn').addEventListener('click', function() {
+            generateQuestions();
+            switchPage('quizPage');
+            startTimer();
+            renderQuestion();
+            document.getElementById('answerInput').focus();
+        });
+
+        function renderQuestion() {
+            const q = questionList[currentIndex];
+            document.getElementById('questionText').textContent = q.text;
+            document.getElementById('quizProgress').textContent = `第 ${currentIndex + 1} / ${questionList.length} 题`;
+            
+            const typeMap = { oral: '口算题', simple: '简便计算', word: '应用题' };
+            document.getElementById('quizType').textContent = typeMap[currentConfig.type];
+            
+            document.getElementById('answerInput').value = userAnswers[currentIndex];
+            
+            // 应用题显示单位提示
+            if(q.unit) {
+                document.getElementById('unitTip').classList.remove('hidden');
+            } else {
+                document.getElementById('unitTip').classList.add('hidden');
+            }
+
+            // 按钮状态
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').textContent = currentIndex === questionList.length - 1 ? '完成' : '下一题';
+        }
+
+        function startTimer() {
+            totalSeconds = 0;
+            startTime = Date.now();
+            document.getElementById('timer').textContent = '00:00';
+            timerInterval = setInterval(() => {
+                totalSeconds++;
+                document.getElementById('timer').textContent = formatTime(totalSeconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // 下一题
+        document.getElementById('nextBtn').addEventListener('click', function() {
+            userAnswers[currentIndex] = document.getElementById('answerInput').value;
+            
+            if(currentIndex < questionList.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                submitQuiz();
+            }
+            document.getElementById('answerInput').focus();
+        });
+
+        // 上一题
+        document.getElementById('prevBtn').addEventListener('click', function() {
+            userAnswers[currentIndex] = document.getElementById('answerInput').value;
+            if(currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+            document.getElementById('answerInput').focus();
+        });
+
+        // 回车提交
+        document.getElementById('answerInput').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') {
+                document.getElementById('nextBtn').click();
+            }
+        });
+
+        // 提交全部
+        document.getElementById('submitAllBtn').addEventListener('click', function() {
+            if(confirm('确定要提交全部答案吗？未作答的题目将按错误计算。')) {
+                userAnswers[currentIndex] = document.getElementById('answerInput').value;
+                submitQuiz();
+            }
+        });
+
+        // ===================== 批改与结果 =====================
+        function submitQuiz() {
+            stopTimer();
+            
+            let correctCount = 0;
+            let wrongList = [];
+            
+            questionList.forEach((q, index) => {
+                const userAns = parseFloat(userAnswers[index]);
+                const correctAns = parseFloat(q.answer);
+                // 允许0.01误差
+                const isCorrect = Math.abs(userAns - correctAns) < 0.01;
+                
+                if(isCorrect) {
+                    correctCount++;
+                } else {
+                    wrongList.push({
+                        question: q.text,
+                        userAnswer: userAnswers[index] || '未作答',
+                        correctAnswer: correctAns
+                    });
+                }
+            });
+
+            const score = Math.round(correctCount / questionList.length * 100);
+            const accuracy = `${Math.round(correctCount / questionList.length * 100)}%`;
+            
+            // 保存记录
+            const record = {
+                id: Date.now(),
+                time: new Date().toLocaleString(),
+                grade: currentConfig.grade,
+                type: currentConfig.type,
+                count: questionList.length,
+                score,
+                accuracy,
+                timeUsed: totalSeconds,
+                wrongCount: wrongList.length
+            };
+            
+            const records = getFromStorage('records') || [];
+            records.unshift(record);
+            saveToStorage('records', records);
+
+            // 保存错题
+            if(wrongList.length > 0) {
+                const wrongBook = getFromStorage('wrongBook') || [];
+                wrongList.forEach(w => {
+                    wrongBook.unshift({
+                        ...w,
+                        grade: currentConfig.grade,
+                        type: currentConfig.type,
+                        addTime: new Date().toLocaleString()
+                    });
+                });
+                saveToStorage('wrongBook', wrongBook);
+            }
+
+            // 渲染结果
+            renderResult(score, accuracy, totalSeconds, wrongList);
+            switchPage('resultPage');
+        }
+
+        function renderResult(score, accuracy, timeUsed, wrongList) {
+            document.getElementById('resultScore').textContent = score;
+            document.getElementById('resultAccuracy').textContent = accuracy;
+            document.getElementById('resultTime').textContent = formatTime(timeUsed);
+            document.getElementById('resultWrong').textContent = wrongList.length;
+
+            // 生成建议
+            let suggestion = '';
+            const avgTime = timeUsed / questionList.length;
+            
+            if(score >= 90) {
+                if(avgTime < 30) {
+                    suggestion = '正确率和速度都非常优秀！计算能力扎实，建议挑战更高难度的题目，继续突破自我。';
+                } else {
+                    suggestion = '正确率很高，基础非常扎实！可以适当提升答题速度，在保证准确的前提下提高效率。';
+                }
+            } else if(score >= 70) {
+                suggestion = '整体表现不错，但还有提升空间。建议针对错题对应的知识点加强练习，注意计算过程中的细节问题，减少粗心失误。';
+            } else {
+                suggestion = '本次练习正确率有待提升，建议回归课本巩固基础知识点，从基础难度开始循序渐进，每天坚持练习10-20道题，逐步提高计算能力。';
+            }
+            document.getElementById('suggestionText').textContent = suggestion;
+
+            // 错题列表
+            const wrongContainer = document.getElementById('wrongList');
+            const wrongSection = document.getElementById('wrongDetailSection');
+            
+            if(wrongList.length === 0) {
+                wrongSection.classList.add('hidden');
+            } else {
+                wrongSection.classList.remove('hidden');
+                wrongContainer.innerHTML = wrongList.map((w, i) => `
+                    <div class="border border-red-100 bg-red-50 rounded-lg p-4">
+                        <div class="font-medium text-gray-800 mb-2">第${i+1}题：${w.question}</div>
+                        <div class="flex gap-6 text-sm">
+                            <span>你的答案：<span class="text-red-500 font-medium">${w.userAnswer}</span></span>
+                            <span>正确答案：<span class="text-green-600 font-medium">${w.correctAnswer}</span></span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function restartQuiz() {
+            generateQuestions();
+            switchPage('quizPage');
+            startTimer();
+            renderQuestion();
+            document.getElementById('answerInput').focus();
+        }
+
+        // ===================== 统计图表 =====================
+        function renderStats() {
+            const records = getFromStorage('records') || [];
+            const wrongBook = getFromStorage('wrongBook') || [];
+            
+            // 基础数据
+            document.getElementById('totalTrainCount').textContent = records.length;
+            const totalQ = records.reduce((sum, r) => sum + r.count, 0);
+            document.getElementById('totalQuestionCount').textContent = totalQ;
+            
+            const avgAcc = records.length > 0 
+                ? Math.round(records.reduce((sum, r) => sum + r.score, 0) / records.length)
+                : 0;
+            document.getElementById('avgAccuracy').textContent = avgAcc + '%';
+            document.getElementById('totalWrongCount').textContent = wrongBook.length;
+
+            // 折线图：最近10次成绩
+            const recentRecords = records.slice(0, 10).reverse();
+            const labels = recentRecords.map(r => r.time.split(' ')[0]);
+            const scores = recentRecords.map(r => r.score);
+
+            if(scoreChartInstance) {
+                scoreChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            scoreChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '正确率',
+                        data: scores,
+                        borderColor: '#165DFF',
+                        backgroundColor: 'rgba(22, 93, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#165DFF',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                callback: value => value + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===================== 错题本 =====================
+        function renderWrongBook() {
+            const wrongBook = getFromStorage('wrongBook') || [];
+            const container = document.getElementById('wrongBookList');
+            
+            if(wrongBook.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-10">暂无错题，继续加油！</div>';
+                return;
+            }
+
+            container.innerHTML = wrongBook.slice(0, 50).map((w, i) => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800 mb-1">${w.question}</div>
+                            <div class="text-sm text-gray-500">
+                                正确答案：<span class="text-green-600">${w.correctAnswer}</span>
+                                <span class="mx-2">|</span>
+                                你的答案：<span class="text-red-500">${w.userAnswer}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeWrong(${i})" class="text-gray-400 hover:text-red-500 text-sm ml-3">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 删除单道错题
+        function removeWrong(index) {
+            if(confirm('确定要删除这道错题吗？')) {
+                const wrongBook = getFromStorage('wrongBook') || [];
+                wrongBook.splice(index, 1);
+                saveToStorage('wrongBook', wrongBook);
+                renderWrongBook();
+            }
+        }
+
+        // 重做错题
+        document.getElementById('practiceWrongBtn').addEventListener('click', function() {
+            const wrongBook = getFromStorage('wrongBook') || [];
+            if(wrongBook.length === 0) {
+                alert('暂无错题可练习');
+                return;
+            }
+            // 最多取20道错题进行练习
+            questionList = wrongBook.slice(0, 20).map(item => ({
+                text: item.question,
+                answer: item.correctAnswer,
+                type: item.type,
+                unit: item.type === 'word'
+            }));
+            userAnswers = new Array(questionList.length).fill('');
+            currentIndex = 0;
+            currentConfig.type = wrongBook[0].type;
+            currentConfig.count = questionList.length;
+
+            switchPage('quizPage');
+            startTimer();
+            renderQuestion();
+            document.getElementById('answerInput').focus();
+        });
+
+        // ===================== 历史记录 =====================
+        function renderHistory() {
+            const records = getFromStorage('records') || [];
+            const container = document.getElementById('historyList');
+            const typeMap = { oral: '口算题', simple: '简便计算', word: '应用题' };
+            
+            if(records.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-10">暂无训练记录</div>';
+                return;
+            }
+
+            container.innerHTML = records.slice(0, 50).map(record => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-medium text-gray-800">
+                                ${record.grade}年级 · ${typeMap[record.type]} · ${record.count}道题
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">训练时间：${record.time}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold ${record.score >= 90 ? 'text-green-600' : record.score >= 70 ? 'text-primary' : 'text-red-500'}">
+                                ${record.score}分
+                            </div>
+                            <div class="text-sm text-gray-500">正确率 ${record.accuracy} · 用时 ${formatTime(record.timeUsed)}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===================== 页面初始化 =====================
+        initUser();
+    </script>
+</body>
+</html>
